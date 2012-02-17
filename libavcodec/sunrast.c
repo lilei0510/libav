@@ -72,13 +72,14 @@ static int sunrast_decode_frame(AVCodecContext *avctx, void *data,
     unsigned int w, h, depth, type, maptype, maplength, stride, x, y, len, alen;
     uint8_t *ptr;
     const uint8_t *bufstart = buf;
+    int ret;
 
     if (avpkt->size < 32)
         return AVERROR_INVALIDDATA;
 
     if (AV_RB32(buf) != RAS_MAGIC) {
         av_log(avctx, AV_LOG_ERROR, "this is not sunras encoded data\n");
-        return -1;
+        return AVERROR_INVALIDDATA;
     }
 
     w         = AV_RB32(buf + 4);
@@ -95,15 +96,15 @@ static int sunrast_decode_frame(AVCodecContext *avctx, void *data,
     }
     if (type > RT_FORMAT_IFF) {
         av_log(avctx, AV_LOG_ERROR, "invalid (compression) type\n");
-        return -1;
+        return AVERROR_INVALIDDATA;
     }
     if (av_image_check_size(w, h, 0, avctx)) {
         av_log(avctx, AV_LOG_ERROR, "invalid image size\n");
-        return -1;
+        return AVERROR_INVALIDDATA;
     }
     if (maptype & ~1) {
         av_log(avctx, AV_LOG_ERROR, "invalid colormap type\n");
-        return -1;
+        return AVERROR_INVALIDDATA;
     }
 
 
@@ -112,14 +113,14 @@ static int sunrast_decode_frame(AVCodecContext *avctx, void *data,
             avctx->pix_fmt = PIX_FMT_MONOWHITE;
             break;
         case 8:
-            avctx->pix_fmt = PIX_FMT_PAL8;
+            avctx->pix_fmt = maplength ? PIX_FMT_PAL8 : PIX_FMT_GRAY8;
             break;
         case 24:
             avctx->pix_fmt = (type == RT_FORMAT_RGB) ? PIX_FMT_RGB24 : PIX_FMT_BGR24;
             break;
         default:
             av_log(avctx, AV_LOG_ERROR, "invalid depth\n");
-            return -1;
+            return AVERROR_INVALIDDATA;
     }
 
     if (p->data[0])
@@ -127,9 +128,9 @@ static int sunrast_decode_frame(AVCodecContext *avctx, void *data,
 
     if (w != avctx->width || h != avctx->height)
         avcodec_set_dimensions(avctx, w, h);
-    if (avctx->get_buffer(avctx, p) < 0) {
+    if ((ret = avctx->get_buffer(avctx, p)) < 0) {
         av_log(avctx, AV_LOG_ERROR, "get_buffer() failed\n");
-        return -1;
+        return ret;
     }
 
     p->pict_type = AV_PICTURE_TYPE_I;
@@ -140,16 +141,12 @@ static int sunrast_decode_frame(AVCodecContext *avctx, void *data,
     if (depth != 8 && maplength) {
         av_log(avctx, AV_LOG_WARNING, "useless colormap found or file is corrupted, trying to recover\n");
 
-    } else if (depth == 8) {
+    } else if (maplength) {
         unsigned int len = maplength / 3;
 
-        if (!maplength) {
-            av_log(avctx, AV_LOG_ERROR, "colormap expected\n");
-            return -1;
-        }
         if (maplength % 3 || maplength > 768) {
             av_log(avctx, AV_LOG_WARNING, "invalid colormap length\n");
-            return -1;
+            return AVERROR_INVALIDDATA;
         }
 
         ptr = p->data[1];

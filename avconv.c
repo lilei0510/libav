@@ -449,7 +449,7 @@ static int alloc_buffer(InputStream *ist, FrameBuffer **pbuf)
     /* XXX this shouldn't be needed, but some tests break without this line
      * those decoders are buggy and need to be fixed.
      * the following tests fail:
-     * bethsoft-vid, cdgraphics, ansi, aasc, fraps-v1, qtrle-1bit
+     * cdgraphics, ansi, aasc, fraps-v1, qtrle-1bit
      */
     memset(buf->base[0], 128, ret);
 
@@ -991,6 +991,8 @@ static int encode_audio_frame(AVFormatContext *s, OutputStream *ost,
     if (got_packet) {
         if (pkt.pts != AV_NOPTS_VALUE)
             pkt.pts      = av_rescale_q(pkt.pts,      enc->time_base, ost->st->time_base);
+        if (pkt.dts != AV_NOPTS_VALUE)
+            pkt.dts      = av_rescale_q(pkt.dts,      enc->time_base, ost->st->time_base);
         if (pkt.duration > 0)
             pkt.duration = av_rescale_q(pkt.duration, enc->time_base, ost->st->time_base);
 
@@ -1793,6 +1795,7 @@ static void do_streamcopy(InputStream *ist, OutputStream *ost, const AVPacket *p
     if (  ost->st->codec->codec_id != CODEC_ID_H264
        && ost->st->codec->codec_id != CODEC_ID_MPEG1VIDEO
        && ost->st->codec->codec_id != CODEC_ID_MPEG2VIDEO
+       && ost->st->codec->codec_id != CODEC_ID_VC1
        ) {
         if (av_parser_change(ist->st->parser, ost->st->codec, &opkt.data, &opkt.size, pkt->data, pkt->size, pkt->flags & AV_PKT_FLAG_KEY))
             opkt.destruct = av_destruct_packet;
@@ -3953,6 +3956,8 @@ static void opt_output_file(void *optctx, const char *filename)
     output_files[nb_output_files - 1].ctx       = oc;
     output_files[nb_output_files - 1].ost_index = nb_output_streams - oc->nb_streams;
     output_files[nb_output_files - 1].recording_time = o->recording_time;
+    if (o->recording_time != INT64_MAX)
+        oc->duration = o->recording_time;
     output_files[nb_output_files - 1].start_time     = o->start_time;
     output_files[nb_output_files - 1].limit_filesize = o->limit_filesize;
     av_dict_copy(&output_files[nb_output_files - 1].opts, format_opts, 0);

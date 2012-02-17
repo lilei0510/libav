@@ -102,6 +102,7 @@ OBJS-$(CONFIG_C93_DECODER)             += c93.o
 OBJS-$(CONFIG_CAVS_DECODER)            += cavs.o cavsdec.o cavsdsp.o \
                                           mpeg12data.o mpegvideo.o
 OBJS-$(CONFIG_CDGRAPHICS_DECODER)      += cdgraphics.o
+OBJS-$(CONFIG_CDXL_DECODER)            += cdxl.o
 OBJS-$(CONFIG_CINEPAK_DECODER)         += cinepak.o
 OBJS-$(CONFIG_CLJR_DECODER)            += cljr.o
 OBJS-$(CONFIG_CLJR_ENCODER)            += cljr.o
@@ -300,7 +301,8 @@ OBJS-$(CONFIG_PNG_DECODER)             += png.o pngdec.o pngdsp.o
 OBJS-$(CONFIG_PNG_ENCODER)             += png.o pngenc.o
 OBJS-$(CONFIG_PPM_DECODER)             += pnmdec.o pnm.o
 OBJS-$(CONFIG_PPM_ENCODER)             += pnmenc.o pnm.o
-OBJS-$(CONFIG_PRORES_DECODER)          += proresdec.o proresdsp.o
+OBJS-$(CONFIG_PRORES_DECODER)          += proresdec.o proresdata.o proresdsp.o
+OBJS-$(CONFIG_PRORES_ENCODER)          += proresenc.o proresdata.o proresdsp.o
 OBJS-$(CONFIG_PTX_DECODER)             += ptx.o
 OBJS-$(CONFIG_QCELP_DECODER)           += qcelpdec.o celp_math.o         \
                                           celp_filters.o acelp_vectors.o \
@@ -694,7 +696,7 @@ HOSTPROGS = aac_tablegen aacps_tablegen cbrt_tablegen cos_tablegen      \
             dv_tablegen motionpixels_tablegen mpegaudio_tablegen        \
             pcm_tablegen qdm2_tablegen sinewin_tablegen
 
-DIRS = alpha arm avr32 bfin ppc ps2 sh4 sparc x86
+DIRS = alpha arm avr32 bfin mips ppc sh4 sparc x86
 
 CLEANFILES = *_tables.c *_tables.h *_tablegen$(HOSTEXESUF)
 

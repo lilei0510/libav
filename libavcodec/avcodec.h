@@ -244,6 +244,7 @@ enum CodecID {
     CODEC_ID_DXTORY,
     CODEC_ID_V410,
     CODEC_ID_XWD,
+    CODEC_ID_CDXL,
 
     /* various PCM "codecs" */
     CODEC_ID_FIRST_AUDIO = 0x10000,     ///< A dummy id pointing at the start of audio codecs
@@ -1729,7 +1730,7 @@ typedef struct AVCodecContext {
 #define FF_IDCT_SIMPLE        2
 #define FF_IDCT_SIMPLEMMX     3
 #define FF_IDCT_LIBMPEG2MMX   4
-#define FF_IDCT_PS2           5
+#define FF_IDCT_MMI           5
 #define FF_IDCT_ARM           7
 #define FF_IDCT_ALTIVEC       8
 #define FF_IDCT_SH4           9

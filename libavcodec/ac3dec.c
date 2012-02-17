@@ -77,18 +77,6 @@ static const float gain_levels[9] = {
 };
 
 /**
- * Table for center mix levels
- * reference: Section 5.4.2.4 cmixlev
- */
-static const uint8_t center_levels[4] = { 4, 5, 6, 5 };
-
-/**
- * Table for surround mix levels
- * reference: Section 5.4.2.5 surmixlev
- */
-static const uint8_t surround_levels[4] = { 4, 6, 7, 6 };
-
-/**
  * Table for default stereo downmixing coefficients
  * reference: Section 7.8.2 Downmixing Into Two Channels
  */
@@ -179,7 +167,7 @@ static av_cold int ac3_decode_init(AVCodecContext *avctx)
     ff_mdct_init(&s->imdct_256, 8, 1, 1.0);
     ff_mdct_init(&s->imdct_512, 9, 1, 1.0);
     ff_kbd_window_init(s->window, 5.0, 256);
-    dsputil_init(&s->dsp, avctx);
+    ff_dsputil_init(&s->dsp, avctx);
     ff_ac3dsp_init(&s->ac3dsp, avctx->flags & CODEC_FLAG_BITEXACT);
     ff_fmt_convert_init(&s->fmt_conv, avctx);
     av_lfg_init(&s->dith_state, 0);
@@ -315,8 +303,8 @@ static int parse_frame_header(AC3DecodeContext *s)
 static void set_downmix_coeffs(AC3DecodeContext *s)
 {
     int i;
-    float cmix = gain_levels[center_levels[s->center_mix_level]];
-    float smix = gain_levels[surround_levels[s->surround_mix_level]];
+    float cmix = gain_levels[s->  center_mix_level];
+    float smix = gain_levels[s->surround_mix_level];
     float norm0, norm1;
 
     for (i = 0; i < s->fbw_channels; i++) {

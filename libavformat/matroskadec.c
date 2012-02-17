@@ -939,7 +939,7 @@ static int matroska_decode_buffer(uint8_t** buf, int* buf_size,
     uint8_t* data = *buf;
     int isize = *buf_size;
     uint8_t* pkt_data = NULL;
-    uint8_t* newpktdata;
+    uint8_t av_unused *newpktdata;
     int pkt_size = isize;
     int result = 0;
     int olen;
@@ -1422,7 +1422,7 @@ static int matroska_read_header(AVFormatContext *s)
                    && (track->codec_priv.size >= 86)
                    && (track->codec_priv.data != NULL)) {
             track->video.fourcc = AV_RL32(track->codec_priv.data);
-            codec_id=ff_codec_get_id(codec_movvideo_tags, track->video.fourcc);
+            codec_id=ff_codec_get_id(ff_codec_movvideo_tags, track->video.fourcc);
         } else if (codec_id == CODEC_ID_PCM_S16BE) {
             switch (track->audio.bitdepth) {
             case  8:  codec_id = CODEC_ID_PCM_U8;     break;
