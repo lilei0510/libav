@@ -854,10 +854,6 @@ static void compute_pkt_fields(AVFormatContext *s, AVStream *st,
     if((s->flags & AVFMT_FLAG_IGNDTS) && pkt->pts != AV_NOPTS_VALUE)
         pkt->dts= AV_NOPTS_VALUE;
 
-    if (st->codec->codec_id != CODEC_ID_H264 && pc && pc->pict_type == AV_PICTURE_TYPE_B)
-        //FIXME Set low_delay = 0 when has_b_frames = 1
-        st->codec->has_b_frames = 1;
-
     /* do we have a video B-frame ? */
     delay= st->codec->has_b_frames;
     presentation_delayed = 0;
@@ -1039,6 +1035,20 @@ static int read_frame_internal(AVFormatContext *s, AVPacket *pkt)
                 if (pkt->size) {
                 got_packet:
                     pkt->duration = 0;
+                    if (st->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
+                        if (st->codec->sample_rate > 0) {
+                            pkt->duration = av_rescale_q_rnd(st->parser->duration,
+                                                             (AVRational){ 1, st->codec->sample_rate },
+                                                             st->time_base,
+                                                             AV_ROUND_DOWN);
+                        }
+                    } else if (st->codec->time_base.num != 0 &&
+                               st->codec->time_base.den != 0) {
+                        pkt->duration = av_rescale_q_rnd(st->parser->duration,
+                                                         st->codec->time_base,
+                                                         st->time_base,
+                                                         AV_ROUND_DOWN);
+                    }
                     pkt->stream_index = st->index;
                     pkt->pts = st->parser->pts;
                     pkt->dts = st->parser->dts;

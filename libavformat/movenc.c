@@ -96,9 +96,9 @@ static int mov_write_stco_tag(AVIOContext *pb, MOVTrack *track)
     avio_wb32(pb, track->entry); /* entry count */
     for (i=0; i<track->entry; i++) {
         if(mode64 == 1)
-            avio_wb64(pb, track->cluster[i].pos);
+            avio_wb64(pb, track->cluster[i].pos + track->data_offset);
         else
-            avio_wb32(pb, track->cluster[i].pos);
+            avio_wb32(pb, track->cluster[i].pos + track->data_offset);
     }
     return update_size(pb, pos);
 }
@@ -1305,6 +1305,9 @@ static int mov_write_mdhd_tag(AVIOContext *pb, MOVTrack *track)
 {
     int version = track->track_duration < INT32_MAX ? 0 : 1;
 
+    if (track->mode == MODE_ISM)
+        version = 1;
+
     (version == 1) ? avio_wb32(pb, 44) : avio_wb32(pb, 32); /* size */
     ffio_wfourcc(pb, "mdhd");
     avio_w8(pb, version);
@@ -1317,7 +1320,10 @@ static int mov_write_mdhd_tag(AVIOContext *pb, MOVTrack *track)
         avio_wb32(pb, track->time); /* modification time */
     }
     avio_wb32(pb, track->timescale); /* time scale (sample rate for audio) */
-    (version == 1) ? avio_wb64(pb, track->track_duration) : avio_wb32(pb, track->track_duration); /* duration */
+    if (!track->entry)
+        (version == 1) ? avio_wb64(pb, UINT64_C(0xffffffffffffffff)) : avio_wb32(pb, 0xffffffff);
+    else
+        (version == 1) ? avio_wb64(pb, track->track_duration) : avio_wb32(pb, track->track_duration); /* duration */
     avio_wb16(pb, track->language); /* language */
     avio_wb16(pb, 0); /* reserved (quality) */
 
@@ -1348,6 +1354,9 @@ static int mov_write_tkhd_tag(AVIOContext *pb, MOVTrack *track, AVStream *st)
                                       track->timescale, AV_ROUND_UP);
     int version = duration < INT32_MAX ? 0 : 1;
 
+    if (track->mode == MODE_ISM)
+        version = 1;
+
     (version == 1) ? avio_wb32(pb, 104) : avio_wb32(pb, 92); /* size */
     ffio_wfourcc(pb, "tkhd");
     avio_w8(pb, version);
@@ -1361,7 +1370,10 @@ static int mov_write_tkhd_tag(AVIOContext *pb, MOVTrack *track, AVStream *st)
     }
     avio_wb32(pb, track->track_id); /* track-id */
     avio_wb32(pb, 0); /* reserved */
-    (version == 1) ? avio_wb64(pb, duration) : avio_wb32(pb, duration);
+    if (!track->entry)
+        (version == 1) ? avio_wb64(pb, UINT64_C(0xffffffffffffffff)) : avio_wb32(pb, 0xffffffff);
+    else
+        (version == 1) ? avio_wb64(pb, duration) : avio_wb32(pb, duration);
 
     avio_wb32(pb, 0); /* reserved */
     avio_wb32(pb, 0); /* reserved */
@@ -2167,19 +2179,19 @@ static int mov_write_tfhd_tag(AVIOContext *pb, MOVTrack *track,
                               int64_t moof_offset)
 {
     int64_t pos = avio_tell(pb);
-    /* default-sample-size + default-sample-duration + base-data-offset */
-    uint32_t flags = 0x19;
+    uint32_t flags = MOV_TFHD_DEFAULT_SIZE | MOV_TFHD_DEFAULT_DURATION |
+                     MOV_TFHD_BASE_DATA_OFFSET;
     if (!track->entry) {
-        flags |= 0x010000; /* duration-is-empty */
+        flags |= MOV_TFHD_DURATION_IS_EMPTY;
     } else {
-        flags |= 0x20; /* default-sample-flags-present */
+        flags |= MOV_TFHD_DEFAULT_FLAGS;
     }
 
     /* Don't set a default sample size, the silverlight player refuses
      * to play files with that set. Don't set a default sample duration,
      * WMP freaks out if it is set. */
     if (track->mode == MODE_ISM)
-        flags &= ~0x18;
+        flags &= ~(MOV_TFHD_DEFAULT_SIZE | MOV_TFHD_DEFAULT_DURATION);
 
     avio_wb32(pb, 0); /* size placeholder */
     ffio_wfourcc(pb, "tfhd");
@@ -2187,22 +2199,23 @@ static int mov_write_tfhd_tag(AVIOContext *pb, MOVTrack *track,
     avio_wb24(pb, flags);
 
     avio_wb32(pb, track->track_id); /* track-id */
-    if (flags & 0x01)
+    if (flags & MOV_TFHD_BASE_DATA_OFFSET)
         avio_wb64(pb, moof_offset);
-    if (flags & 0x08) {
+    if (flags & MOV_TFHD_DEFAULT_DURATION) {
         track->default_duration = track->audio_vbr ? track->enc->frame_size : 1;
         avio_wb32(pb, track->default_duration);
     }
-    if (flags & 0x10) {
+    if (flags & MOV_TFHD_DEFAULT_SIZE) {
         track->default_size = track->entry ? track->cluster[0].size : 1;
         avio_wb32(pb, track->default_size);
     } else
         track->default_size = -1;
 
-    if (flags & 0x20) {
+    if (flags & MOV_TFHD_DEFAULT_FLAGS) {
         track->default_sample_flags =
             track->enc->codec_type == AVMEDIA_TYPE_VIDEO ?
-            0x01010000 : 0x02000000;
+            (MOV_FRAG_SAMPLE_FLAG_DEPENDS_YES | MOV_FRAG_SAMPLE_FLAG_IS_NON_SYNC) :
+            MOV_FRAG_SAMPLE_FLAG_DEPENDS_NO;
         avio_wb32(pb, track->default_sample_flags);
     }
 
@@ -2211,13 +2224,14 @@ static int mov_write_tfhd_tag(AVIOContext *pb, MOVTrack *track,
 
 static uint32_t get_sample_flags(MOVTrack *track, MOVIentry *entry)
 {
-    return entry->flags & MOV_SYNC_SAMPLE ? 0x02000000 : 0x01010000;
+    return entry->flags & MOV_SYNC_SAMPLE ? MOV_FRAG_SAMPLE_FLAG_DEPENDS_NO :
+           (MOV_FRAG_SAMPLE_FLAG_DEPENDS_YES | MOV_FRAG_SAMPLE_FLAG_IS_NON_SYNC);
 }
 
 static int mov_write_trun_tag(AVIOContext *pb, MOVTrack *track)
 {
     int64_t pos = avio_tell(pb);
-    uint32_t flags = 1; /* data-offset-present */
+    uint32_t flags = MOV_TRUN_DATA_OFFSET;
     int i;
 
     for (i = 0; i < track->entry; i++) {
@@ -2225,16 +2239,16 @@ static int mov_write_trun_tag(AVIOContext *pb, MOVTrack *track)
             track->track_duration - track->cluster[i].dts + track->start_dts :
             track->cluster[i + 1].dts - track->cluster[i].dts;
         if (duration != track->default_duration)
-            flags |= 0x100; /* sample-duration-present */
+            flags |= MOV_TRUN_SAMPLE_DURATION;
         if (track->cluster[i].size != track->default_size)
-            flags |= 0x200; /* sample-size-present */
+            flags |= MOV_TRUN_SAMPLE_SIZE;
         if (i > 0 && get_sample_flags(track, &track->cluster[i]) != track->default_sample_flags)
-            flags |= 0x400; /* sample-flags-present */
+            flags |= MOV_TRUN_SAMPLE_FLAGS;
     }
-    if (!(flags & 0x400))
-        flags |= 0x4; /* first-sample-flags-present */
+    if (!(flags & MOV_TRUN_SAMPLE_FLAGS))
+        flags |= MOV_TRUN_FIRST_SAMPLE_FLAGS;
     if (track->flags & MOV_TRACK_CTTS)
-        flags |= 0x800; /* sample-composition-time-offsets-present */
+        flags |= MOV_TRUN_SAMPLE_CTS;
 
     avio_wb32(pb, 0); /* size placeholder */
     ffio_wfourcc(pb, "trun");
@@ -2244,20 +2258,20 @@ static int mov_write_trun_tag(AVIOContext *pb, MOVTrack *track)
     avio_wb32(pb, track->entry); /* sample count */
     track->moof_size_offset = avio_tell(pb);
     avio_wb32(pb, 0); /* data offset */
-    if (flags & 0x4) /* first sample flags */
+    if (flags & MOV_TRUN_FIRST_SAMPLE_FLAGS)
         avio_wb32(pb, get_sample_flags(track, &track->cluster[0]));
 
     for (i = 0; i < track->entry; i++) {
         int64_t duration = i + 1 == track->entry ?
             track->track_duration - track->cluster[i].dts + track->start_dts :
             track->cluster[i + 1].dts - track->cluster[i].dts;
-        if (flags & 0x100)
+        if (flags & MOV_TRUN_SAMPLE_DURATION)
             avio_wb32(pb, duration);
-        if (flags & 0x200)
+        if (flags & MOV_TRUN_SAMPLE_SIZE)
             avio_wb32(pb, track->cluster[i].size);
-        if (flags & 0x400)
+        if (flags & MOV_TRUN_SAMPLE_FLAGS)
             avio_wb32(pb, get_sample_flags(track, &track->cluster[i]));
-        if (flags & 0x800)
+        if (flags & MOV_TRUN_SAMPLE_CTS)
             avio_wb32(pb, track->cluster[i].cts);
     }
 
@@ -2667,6 +2681,10 @@ static int mov_flush_fragment(AVFormatContext *s)
 
     if (!(mov->flags & FF_MOV_FLAG_EMPTY_MOOV) && mov->fragments == 0) {
         int64_t pos = avio_tell(s->pb);
+        int ret;
+        AVIOContext *moov_buf;
+        uint8_t *buf;
+        int buf_size;
 
         for (i = 0; i < mov->nb_streams; i++)
             if (!mov->tracks[i].entry)
@@ -2674,10 +2692,24 @@ static int mov_flush_fragment(AVFormatContext *s)
         /* Don't write the initial moov unless all tracks have data */
         if (i < mov->nb_streams)
             return 0;
-        avio_seek(s->pb, mov->mdat_pos, SEEK_SET);
-        avio_wb32(s->pb, mov->mdat_size + 8);
-        avio_seek(s->pb, pos, SEEK_SET);
+
+        if ((ret = avio_open_dyn_buf(&moov_buf)) < 0)
+            return ret;
+        mov_write_moov_tag(moov_buf, mov, s);
+        buf_size = avio_close_dyn_buf(moov_buf, &buf);
+        av_free(buf);
+        for (i = 0; i < mov->nb_streams; i++)
+            mov->tracks[i].data_offset = pos + buf_size + 8;
+
         mov_write_moov_tag(s->pb, mov, s);
+
+        buf_size = avio_close_dyn_buf(mov->mdat_buf, &buf);
+        mov->mdat_buf = NULL;
+        avio_wb32(s->pb, buf_size + 8);
+        ffio_wfourcc(s->pb, "mdat");
+        avio_write(s->pb, buf, buf_size);
+        av_free(buf);
+
         mov->fragments++;
         mov->mdat_size = 0;
         for (i = 0; i < mov->nb_streams; i++) {
@@ -2790,13 +2822,21 @@ static int mov_write_packet_internal(AVFormatContext *s, AVPacket *pkt)
         mov_flush_fragment(s);
     }
 
-    if (mov->flags & FF_MOV_FLAG_FRAGMENT && mov->fragments > 0) {
-        if (!trk->mdat_buf) {
-            int ret;
-            if ((ret = avio_open_dyn_buf(&trk->mdat_buf)) < 0)
-                return ret;
+    if (mov->flags & FF_MOV_FLAG_FRAGMENT) {
+        int ret;
+        if (mov->fragments > 0) {
+            if (!trk->mdat_buf) {
+                if ((ret = avio_open_dyn_buf(&trk->mdat_buf)) < 0)
+                    return ret;
+            }
+            pb = trk->mdat_buf;
+        } else {
+            if (!mov->mdat_buf) {
+                if ((ret = avio_open_dyn_buf(&mov->mdat_buf)) < 0)
+                    return ret;
+            }
+            pb = mov->mdat_buf;
         }
-        pb = trk->mdat_buf;
     }
 
     if (enc->codec_id == CODEC_ID_AMR_NB) {
@@ -2958,11 +2998,18 @@ static int mov_write_header(AVFormatContext *s)
     AVDictionaryEntry *t;
     int i, hint_track = 0;
 
-    /* Non-seekable output is ok if EMPTY_MOOV is set, or if using the ismv
-     * format (which sets EMPTY_MOOV later in this function). If ism_lookahead
+    /* Set the FRAGMENT flag if any of the fragmentation methods are
+     * enabled. */
+    if (mov->max_fragment_duration || mov->max_fragment_size ||
+        mov->flags & (FF_MOV_FLAG_EMPTY_MOOV |
+                      FF_MOV_FLAG_FRAG_KEYFRAME |
+                      FF_MOV_FLAG_FRAG_CUSTOM))
+        mov->flags |= FF_MOV_FLAG_FRAGMENT;
+
+    /* Non-seekable output is ok if using fragmentation. If ism_lookahead
      * is enabled, we don't support non-seekable output at all. */
     if (!s->pb->seekable &&
-        ((!(mov->flags & FF_MOV_FLAG_EMPTY_MOOV) &&
+        ((!(mov->flags & FF_MOV_FLAG_FRAGMENT) &&
           !(s->oformat && !strcmp(s->oformat->name, "ismv")))
          || mov->ism_lookahead)) {
         av_log(s, AV_LOG_ERROR, "muxer does not support non seekable output\n");
@@ -3102,18 +3149,11 @@ static int mov_write_header(AVFormatContext *s)
                             FF_MOV_FLAG_FRAG_CUSTOM)) &&
             !mov->max_fragment_duration && !mov->max_fragment_size)
             mov->max_fragment_duration = 5000000;
-        mov->flags |= FF_MOV_FLAG_EMPTY_MOOV | FF_MOV_FLAG_SEPARATE_MOOF;
+        mov->flags |= FF_MOV_FLAG_EMPTY_MOOV | FF_MOV_FLAG_SEPARATE_MOOF |
+                      FF_MOV_FLAG_FRAGMENT;
     }
 
-    /* Set the FRAGMENT flag if any of the fragmentation methods are
-     * enabled. */
-    if (mov->max_fragment_duration || mov->max_fragment_size ||
-        mov->flags & (FF_MOV_FLAG_EMPTY_MOOV |
-                      FF_MOV_FLAG_FRAG_KEYFRAME |
-                      FF_MOV_FLAG_FRAG_CUSTOM))
-        mov->flags |= FF_MOV_FLAG_FRAGMENT;
-
-    if (!(mov->flags & FF_MOV_FLAG_EMPTY_MOOV))
+    if (!(mov->flags & FF_MOV_FLAG_FRAGMENT))
         mov_write_mdat_tag(pb, mov);
 
     if (t = av_dict_get(s->metadata, "creation_time", NULL, 0))

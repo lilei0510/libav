@@ -48,15 +48,13 @@
 void ff_mmx_idct(DCTELEM *data);
 void ff_mmxext_idct(DCTELEM *data);
 
-void odivx_idct_c(short *block);
-
 // BFIN
 void ff_bfin_idct(DCTELEM *block);
 void ff_bfin_fdct(DCTELEM *block);
 
 // ALTIVEC
-void fdct_altivec(DCTELEM *block);
-//void idct_altivec(DCTELEM *block);?? no routine
+void ff_fdct_altivec(DCTELEM *block);
+//void ff_idct_altivec(DCTELEM *block);?? no routine
 
 // ARM
 void ff_j_rev_dct_arm(DCTELEM *data);
@@ -97,7 +95,7 @@ static const struct algo fdct_tab[] = {
 #endif
 
 #if HAVE_ALTIVEC
-    { "altivecfdct",    fdct_altivec,          NO_PERM,   AV_CPU_FLAG_ALTIVEC },
+    { "altivecfdct",    ff_fdct_altivec,       NO_PERM,   AV_CPU_FLAG_ALTIVEC },
 #endif
 
 #if ARCH_BFIN

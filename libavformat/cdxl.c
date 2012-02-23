@@ -43,7 +43,7 @@ static int cdxl_read_header(AVFormatContext *s)
     CDXLDemuxContext *cdxl = s->priv_data;
     int ret;
 
-    if ((ret = av_parse_video_rate(&cdxl->fps, cdxl->framerate)) < 0) {
+    if (cdxl->framerate && (ret = av_parse_video_rate(&cdxl->fps, cdxl->framerate)) < 0) {
         av_log(s, AV_LOG_ERROR,
                "Could not parse framerate: %s.\n", cdxl->framerate);
         return ret;
@@ -62,9 +62,8 @@ static int cdxl_read_packet(AVFormatContext *s, AVPacket *pkt)
 {
     CDXLDemuxContext *cdxl = s->priv_data;
     AVIOContext *pb = s->pb;
-    uint32_t current_size;
-    uint16_t audio_size, palette_size;
-    int32_t  video_size;
+    uint32_t current_size, video_size, image_size;
+    uint16_t audio_size, palette_size, width, height;
     int64_t  pos;
     int      ret;
 
@@ -81,14 +80,17 @@ static int cdxl_read_packet(AVFormatContext *s, AVPacket *pkt)
     }
 
     current_size = AV_RB32(&cdxl->header[2]);
+    width        = AV_RB16(&cdxl->header[14]);
+    height       = AV_RB16(&cdxl->header[16]);
     palette_size = AV_RB16(&cdxl->header[20]);
     audio_size   = AV_RB16(&cdxl->header[22]);
+    image_size   = FFALIGN(width, 16) * height * cdxl->header[19] / 8;
+    video_size   = palette_size + image_size;
 
     if (palette_size > 512)
         return AVERROR_INVALIDDATA;
-    if (current_size < audio_size + palette_size + CDXL_HEADER_SIZE)
+    if (current_size < (uint64_t)audio_size + video_size + CDXL_HEADER_SIZE)
         return AVERROR_INVALIDDATA;
-    video_size   = current_size - audio_size - CDXL_HEADER_SIZE;
 
     if (cdxl->read_chunk && audio_size) {
         if (cdxl->audio_stream_index == -1) {
@@ -101,8 +103,9 @@ static int cdxl_read_packet(AVFormatContext *s, AVPacket *pkt)
             st->codec->codec_id      = CODEC_ID_PCM_S8;
             st->codec->channels      = cdxl->header[1] & 0x10 ? 2 : 1;
             st->codec->sample_rate   = cdxl->sample_rate;
+            st->start_time           = 0;
             cdxl->audio_stream_index = st->index;
-            avpriv_set_pts_info(st, 32, 1, cdxl->sample_rate);
+            avpriv_set_pts_info(st, 64, 1, cdxl->sample_rate);
         }
 
         ret = av_get_packet(pb, pkt, audio_size);
@@ -121,10 +124,14 @@ static int cdxl_read_packet(AVFormatContext *s, AVPacket *pkt)
             st->codec->codec_type    = AVMEDIA_TYPE_VIDEO;
             st->codec->codec_tag     = 0;
             st->codec->codec_id      = CODEC_ID_CDXL;
-            st->codec->width         = AV_RB16(&cdxl->header[14]);
-            st->codec->height        = AV_RB16(&cdxl->header[16]);
+            st->codec->width         = width;
+            st->codec->height        = height;
+            st->start_time           = 0;
             cdxl->video_stream_index = st->index;
-            avpriv_set_pts_info(st, 63, cdxl->fps.den, cdxl->fps.num);
+            if (cdxl->framerate)
+                avpriv_set_pts_info(st, 64, cdxl->fps.den, cdxl->fps.num);
+            else
+                avpriv_set_pts_info(st, 64, 1, cdxl->sample_rate);
         }
 
         if (av_new_packet(pkt, video_size + CDXL_HEADER_SIZE) < 0)
@@ -138,16 +145,19 @@ static int cdxl_read_packet(AVFormatContext *s, AVPacket *pkt)
         pkt->stream_index  = cdxl->video_stream_index;
         pkt->flags        |= AV_PKT_FLAG_KEY;
         pkt->pos           = pos;
+        pkt->duration      = cdxl->framerate ? 1 : audio_size ? audio_size : 220;
         cdxl->read_chunk   = audio_size;
     }
 
+    if (!cdxl->read_chunk)
+        avio_skip(pb, current_size - audio_size - video_size - CDXL_HEADER_SIZE);
     return ret;
 }
 
 #define OFFSET(x) offsetof(CDXLDemuxContext, x)
 static const AVOption cdxl_options[] = {
     { "sample_rate", "", OFFSET(sample_rate), AV_OPT_TYPE_INT,    { .dbl = 11025 }, 1, INT_MAX, AV_OPT_FLAG_DECODING_PARAM },
-    { "framerate",   "", OFFSET(framerate),   AV_OPT_TYPE_STRING, { .str = "10" },  0, 0,       AV_OPT_FLAG_DECODING_PARAM },
+    { "framerate",   "", OFFSET(framerate),   AV_OPT_TYPE_STRING, { .str = NULL },  0, 0,       AV_OPT_FLAG_DECODING_PARAM },
     { NULL },
 };
 
