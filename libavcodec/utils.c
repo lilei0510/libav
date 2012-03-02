@@ -553,7 +553,7 @@ int avcodec_default_reget_buffer(AVCodecContext *s, AVFrame *pic){
         return s->get_buffer(s, pic);
     }
 
-    assert(s->pix_fmt == pic->pix_fmt);
+    assert(s->pix_fmt == pic->format);
 
     /* If internal buffer type return the same buffer */
     if(pic->type == FF_BUFFER_TYPE_INTERNAL) {
@@ -1112,6 +1112,12 @@ int attribute_align_arg avcodec_encode_video2(AVCodecContext *avctx,
             avpkt->size = 0;
         else if (!(avctx->codec->capabilities & CODEC_CAP_DELAY))
             avpkt->pts = avpkt->dts = frame->pts;
+
+        if (!user_packet && avpkt->data) {
+            uint8_t *new_data = av_realloc(avpkt->data, avpkt->size);
+            if (new_data)
+                avpkt->data = new_data;
+        }
 
         avctx->frame_number++;
     }
