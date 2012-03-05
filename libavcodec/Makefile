@@ -418,6 +418,7 @@ OBJS-$(CONFIG_VP6_DECODER)             += vp6.o vp56.o vp56data.o vp56dsp.o \
 OBJS-$(CONFIG_VP8_DECODER)             += vp8.o vp8dsp.o vp56rac.o
 OBJS-$(CONFIG_VQA_DECODER)             += vqavideo.o
 OBJS-$(CONFIG_WAVPACK_DECODER)         += wavpack.o
+OBJS-$(CONFIG_WMALOSSLESS_DECODER)     += wmalosslessdec.o wma.o
 OBJS-$(CONFIG_WMAPRO_DECODER)          += wmaprodec.o wma.o
 OBJS-$(CONFIG_WMAV1_DECODER)           += wmadec.o wma.o aactab.o
 OBJS-$(CONFIG_WMAV1_ENCODER)           += wmaenc.o wma.o aactab.o
@@ -643,6 +644,7 @@ OBJS-$(CONFIG_RV40_PARSER)             += rv34_parser.o
 OBJS-$(CONFIG_VC1_PARSER)              += vc1_parser.o vc1.o vc1data.o \
                                           msmpeg4.o msmpeg4data.o mpeg4video.o \
                                           h263.o mpegvideo.o error_resilience.o
+OBJS-$(CONFIG_VORBIS_PARSER)           += vorbis_parser.o xiph.o
 OBJS-$(CONFIG_VP3_PARSER)              += vp3_parser.o
 OBJS-$(CONFIG_VP8_PARSER)              += vp8_parser.o
 
