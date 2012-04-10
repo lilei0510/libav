@@ -477,7 +477,7 @@ static void put_bitstream_info(AVCodecContext *avctx, AACEncContext *s,
  * Deinterleave input samples.
  * Channels are reordered from Libav's default order to AAC order.
  */
-static void deinterleave_input_samples(AACEncContext *s, AVFrame *frame)
+static void deinterleave_input_samples(AACEncContext *s, const AVFrame *frame)
 {
     int ch, i;
     const int sinc = s->channels;
@@ -817,8 +817,10 @@ AVCodec ff_aac_encoder = {
     .init           = aac_encode_init,
     .encode2        = aac_encode_frame,
     .close          = aac_encode_end,
-    .capabilities = CODEC_CAP_SMALL_LAST_FRAME | CODEC_CAP_DELAY | CODEC_CAP_EXPERIMENTAL,
-    .sample_fmts = (const enum AVSampleFormat[]){AV_SAMPLE_FMT_FLT,AV_SAMPLE_FMT_NONE},
-    .long_name = NULL_IF_CONFIG_SMALL("Advanced Audio Coding"),
-    .priv_class = &aacenc_class,
+    .capabilities   = CODEC_CAP_SMALL_LAST_FRAME | CODEC_CAP_DELAY |
+                      CODEC_CAP_EXPERIMENTAL,
+    .sample_fmts    = (const enum AVSampleFormat[]){ AV_SAMPLE_FMT_FLT,
+                                                     AV_SAMPLE_FMT_NONE },
+    .long_name      = NULL_IF_CONFIG_SMALL("Advanced Audio Coding"),
+    .priv_class     = &aacenc_class,
 };

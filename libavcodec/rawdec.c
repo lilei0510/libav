@@ -119,6 +119,7 @@ static int raw_decode(AVCodecContext *avctx,
     const uint8_t *buf = avpkt->data;
     int buf_size = avpkt->size;
     RawVideoContext *context = avctx->priv_data;
+    int res;
 
     AVFrame   *frame   = data;
     AVPicture *picture = data;
@@ -156,7 +157,9 @@ static int raw_decode(AVCodecContext *avctx,
        avctx->codec_tag == MKTAG('A', 'V', 'u', 'p'))
         buf += buf_size - context->length;
 
-    avpicture_fill(picture, buf, avctx->pix_fmt, avctx->width, avctx->height);
+    if ((res = avpicture_fill(picture, buf, avctx->pix_fmt,
+                              avctx->width, avctx->height)) < 0)
+        return res;
     if((avctx->pix_fmt==PIX_FMT_PAL8 && buf_size < context->length) ||
        (av_pix_fmt_descriptors[avctx->pix_fmt].flags & PIX_FMT_PSEUDOPAL)) {
         frame->data[1]= context->palette;
@@ -176,6 +179,8 @@ static int raw_decode(AVCodecContext *avctx,
         flip(avctx, picture);
 
     if (   avctx->codec_tag == MKTAG('Y', 'V', '1', '2')
+        || avctx->codec_tag == MKTAG('Y', 'V', '1', '6')
+        || avctx->codec_tag == MKTAG('Y', 'V', '2', '4')
         || avctx->codec_tag == MKTAG('Y', 'V', 'U', '9'))
         FFSWAP(uint8_t *, picture->data[1], picture->data[2]);
 
@@ -210,5 +215,5 @@ AVCodec ff_rawvideo_decoder = {
     .init           = raw_init_decoder,
     .close          = raw_close_decoder,
     .decode         = raw_decode,
-    .long_name = NULL_IF_CONFIG_SMALL("raw video"),
+    .long_name      = NULL_IF_CONFIG_SMALL("raw video"),
 };

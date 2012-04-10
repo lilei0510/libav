@@ -12,25 +12,32 @@ libavutil:   2011-04-18
 
 API changes, most recent first:
 
-2012-03-xx - xxxxxxx - lavu 51.25.0 - cpu.h
+2012-xx-xx - xxxxxxx - lavu 51.27.0 - samplefmt.h
+  Add av_get_packed_sample_fmt() and av_get_planar_sample_fmt()
+
+2012-xx-xx - xxxxxxx - lavu 51.26.0 - audioconvert.h
+  Add av_get_default_channel_layout()
+
+2012-03-06 - 4d851f8 - lavu 51.25.0 - cpu.h
   Add av_set_cpu_flags_mask().
 
-2012-xx-xx - lavc 54.8.0
-  xxxxxxx Add av_get_exact_bits_per_sample()
-  xxxxxxx Add av_get_audio_frame_duration()
+2012-03-05 - lavc 54.8.0
+  6699d07 Add av_get_exact_bits_per_sample()
+  9524cf7 Add av_get_audio_frame_duration()
 
-2012-03-xx - xxxxxxx - lavc 54.7.0 - avcodec.h
+2012-03-04 - 44fe77b - lavc 54.7.0 - avcodec.h
   Add av_codec_is_encoder/decoder().
 
-2012-xx-xx - xxxxxxx - lavc 54.3.0 - avcodec.h
+2012-03-01 - 442c132 - lavc 54.3.0 - avcodec.h
   Add av_packet_shrink_side_data.
 
-2012-xx-xx - xxxxxxx - lavf 54.2.0 - avformat.h
+2012-02-29 - dd2a4bc - lavf 54.2.0 - avformat.h
   Add AVStream.attached_pic and AV_DISPOSITION_ATTACHED_PIC,
   used for dealing with attached pictures/cover art.
 
 2012-02-25 - c9bca80 - lavu 51.24.0 - error.h
   Add AVERROR_UNKNOWN
+  NOTE: this was backported to 0.8
 
 2012-02-20 - e9cda85 - lavc 54.2.0
   Add duration field to AVCodecParserContext
@@ -51,19 +58,26 @@ API changes, most recent first:
 
 2012-01-31 - dd6d3b0 - lavf 54.01.0
   Add avformat_get_riff_video_tags() and avformat_get_riff_audio_tags().
+  NOTE: this was backported to 0.8
 
 2012-01-31 - af08d9a - lavc 54.01.0
   Add avcodec_is_open() function.
+  NOTE: this was backported to 0.8
 
 2012-01-30 - 8b93312 - lavu 51.22.0 - intfloat.h
   Add a new installed header libavutil/intfloat.h with int/float punning
   functions.
+  NOTE: this was backported to 0.8
 
 2012-01-25 - lavf 53.22.0
   f1caf01 Allow doing av_write_frame(ctx, NULL) for flushing possible
           buffered data within a muxer. Added AVFMT_ALLOW_FLUSH for
           muxers supporting it (av_write_frame makes sure it is called
           only for muxers with this flag).
+
+------------------------------8<-------------------------------------
+                   0.8 branch was cut here
+----------------------------->8--------------------------------------
 
 2012-01-15 - lavc 53.34.0
   New audio encoding API:
@@ -206,14 +220,21 @@ API changes, most recent first:
 
 2011-07-10 - a67c061 - lavf 53.3.0
   Add avformat_find_stream_info(), deprecate av_find_stream_info().
+  NOTE: this was backported to 0.7
 
 2011-07-10 - 0b950fe - lavc 53.6.0
   Add avcodec_open2(), deprecate avcodec_open().
+  NOTE: this was backported to 0.7
+
   Add avcodec_alloc_context3. Deprecate avcodec_alloc_context() and
   avcodec_alloc_context2().
 
 2011-06-23 - 67e9ae1 - lavu 51.8.0 - attributes.h
   Add av_printf_format().
+
+------------------------------8<-------------------------------------
+                   0.7 branch was cut here
+----------------------------->8--------------------------------------
 
 2011-06-16 - 05e84c9, 25de595 - lavf 53.2.0 - avformat.h
   Add avformat_open_input and avformat_write_header().

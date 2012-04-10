@@ -2306,7 +2306,9 @@ int avformat_find_stream_info(AVFormatContext *ic, AVDictionary **options)
                 break;
             if(st->parser && st->parser->parser->split && !st->codec->extradata)
                 break;
-            if(st->first_dts == AV_NOPTS_VALUE)
+            if (st->first_dts == AV_NOPTS_VALUE &&
+                (st->codec->codec_type == AVMEDIA_TYPE_VIDEO ||
+                 st->codec->codec_type == AVMEDIA_TYPE_AUDIO))
                 break;
         }
         if (i == ic->nb_streams) {
@@ -3128,24 +3130,30 @@ static int interleave_packet(AVFormatContext *s, AVPacket *out, AVPacket *in, in
 }
 
 int av_interleaved_write_frame(AVFormatContext *s, AVPacket *pkt){
-    AVStream *st= s->streams[ pkt->stream_index];
-    int ret;
+    int ret, flush = 0;
 
-    //FIXME/XXX/HACK drop zero sized packets
-    if(st->codec->codec_type == AVMEDIA_TYPE_AUDIO && pkt->size==0)
-        return 0;
+    if (pkt) {
+        AVStream *st= s->streams[ pkt->stream_index];
 
-    av_dlog(s, "av_interleaved_write_frame size:%d dts:%"PRId64" pts:%"PRId64"\n",
-            pkt->size, pkt->dts, pkt->pts);
-    if((ret = compute_pkt_fields2(s, st, pkt)) < 0 && !(s->oformat->flags & AVFMT_NOTIMESTAMPS))
-        return ret;
+        //FIXME/XXX/HACK drop zero sized packets
+        if(st->codec->codec_type == AVMEDIA_TYPE_AUDIO && pkt->size==0)
+            return 0;
 
-    if(pkt->dts == AV_NOPTS_VALUE && !(s->oformat->flags & AVFMT_NOTIMESTAMPS))
-        return AVERROR(EINVAL);
+        av_dlog(s, "av_interleaved_write_frame size:%d dts:%"PRId64" pts:%"PRId64"\n",
+                pkt->size, pkt->dts, pkt->pts);
+        if((ret = compute_pkt_fields2(s, st, pkt)) < 0 && !(s->oformat->flags & AVFMT_NOTIMESTAMPS))
+            return ret;
+
+        if(pkt->dts == AV_NOPTS_VALUE && !(s->oformat->flags & AVFMT_NOTIMESTAMPS))
+            return AVERROR(EINVAL);
+    } else {
+        av_dlog(s, "av_interleaved_write_frame FLUSH\n");
+        flush = 1;
+    }
 
     for(;;){
         AVPacket opkt;
-        int ret= interleave_packet(s, &opkt, pkt, 0);
+        int ret= interleave_packet(s, &opkt, pkt, flush);
         if(ret<=0) //FIXME cleanup needed for ret<0 ?
             return ret;
 
@@ -3662,7 +3670,7 @@ int ff_url_join(char *str, int size, const char *proto,
                 int port, const char *fmt, ...)
 {
 #if CONFIG_NETWORK
-    struct addrinfo hints, *ai;
+    struct addrinfo hints = { 0 }, *ai;
 #endif
 
     str[0] = '\0';
@@ -3673,7 +3681,6 @@ int ff_url_join(char *str, int size, const char *proto,
 #if CONFIG_NETWORK && defined(AF_INET6)
     /* Determine if hostname is a numerical IPv6 address,
      * properly escape it within [] in that case. */
-    memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_NUMERICHOST;
     if (!getaddrinfo(hostname, NULL, &hints, &ai)) {
         if (ai->ai_family == AF_INET6) {
