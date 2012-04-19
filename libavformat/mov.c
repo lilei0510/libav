@@ -387,6 +387,7 @@ static int mov_read_dref(MOVContext *c, AVIOContext *pb, MOVAtom atom)
     entries = avio_rb32(pb);
     if (entries >= UINT_MAX / sizeof(*sc->drefs))
         return AVERROR_INVALIDDATA;
+    av_free(sc->drefs);
     sc->drefs = av_mallocz(entries * sizeof(*sc->drefs));
     if (!sc->drefs)
         return AVERROR(ENOMEM);
@@ -1534,7 +1535,10 @@ static int mov_read_stss(MOVContext *c, AVIOContext *pb, MOVAtom atom)
     av_dlog(c->fc, "keyframe_count = %d\n", entries);
 
     if (!entries)
+    {
+        sc->keyframe_absent = 1;
         return 0;
+    }
     if (entries >= UINT_MAX / sizeof(int))
         return AVERROR_INVALIDDATA;
     sc->keyframes = av_malloc(entries * sizeof(int));
@@ -1776,7 +1780,7 @@ static void mov_build_index(MOVContext *mov, AVStream *st)
                     return;
                 }
 
-                if (!sc->keyframe_count || current_sample+key_off == sc->keyframes[stss_index]) {
+                if (!sc->keyframe_absent && (!sc->keyframe_count || current_sample+key_off == sc->keyframes[stss_index])) {
                     keyframe = 1;
                     if (stss_index + 1 < sc->keyframe_count)
                         stss_index++;
@@ -2590,6 +2594,39 @@ finish:
     avio_seek(sc->pb, cur_pos, SEEK_SET);
 }
 
+static int mov_read_close(AVFormatContext *s)
+{
+    MOVContext *mov = s->priv_data;
+    int i, j;
+
+    for (i = 0; i < s->nb_streams; i++) {
+        AVStream *st = s->streams[i];
+        MOVStreamContext *sc = st->priv_data;
+
+        av_freep(&sc->ctts_data);
+        for (j = 0; j < sc->drefs_count; j++) {
+            av_freep(&sc->drefs[j].path);
+            av_freep(&sc->drefs[j].dir);
+        }
+        av_freep(&sc->drefs);
+        if (sc->pb && sc->pb != s->pb)
+            avio_close(sc->pb);
+    }
+
+    if (mov->dv_demux) {
+        for (i = 0; i < mov->dv_fctx->nb_streams; i++) {
+            av_freep(&mov->dv_fctx->streams[i]->codec);
+            av_freep(&mov->dv_fctx->streams[i]);
+        }
+        av_freep(&mov->dv_fctx);
+        av_freep(&mov->dv_demux);
+    }
+
+    av_freep(&mov->trex_data);
+
+    return 0;
+}
+
 static int mov_read_header(AVFormatContext *s)
 {
     MOVContext *mov = s->priv_data;
@@ -2607,10 +2644,12 @@ static int mov_read_header(AVFormatContext *s)
     /* check MOV header */
     if ((err = mov_read_default(mov, pb, atom)) < 0) {
         av_log(s, AV_LOG_ERROR, "error reading header: %d\n", err);
+        mov_read_close(s);
         return err;
     }
     if (!mov->found_moov) {
         av_log(s, AV_LOG_ERROR, "moov atom not found\n");
+        mov_read_close(s);
         return AVERROR_INVALIDDATA;
     }
     av_dlog(mov->fc, "on_parse_exit_offset=%"PRId64"\n", avio_tell(pb));
@@ -2800,39 +2839,6 @@ static int mov_read_seek(AVFormatContext *s, int stream_index, int64_t sample_ti
         timestamp = av_rescale_q(seek_timestamp, s->streams[stream_index]->time_base, st->time_base);
         mov_seek_stream(s, st, timestamp, flags);
     }
-    return 0;
-}
-
-static int mov_read_close(AVFormatContext *s)
-{
-    MOVContext *mov = s->priv_data;
-    int i, j;
-
-    for (i = 0; i < s->nb_streams; i++) {
-        AVStream *st = s->streams[i];
-        MOVStreamContext *sc = st->priv_data;
-
-        av_freep(&sc->ctts_data);
-        for (j = 0; j < sc->drefs_count; j++) {
-            av_freep(&sc->drefs[j].path);
-            av_freep(&sc->drefs[j].dir);
-        }
-        av_freep(&sc->drefs);
-        if (sc->pb && sc->pb != s->pb)
-            avio_close(sc->pb);
-    }
-
-    if (mov->dv_demux) {
-        for (i = 0; i < mov->dv_fctx->nb_streams; i++) {
-            av_freep(&mov->dv_fctx->streams[i]->codec);
-            av_freep(&mov->dv_fctx->streams[i]);
-        }
-        av_freep(&mov->dv_fctx);
-        av_freep(&mov->dv_demux);
-    }
-
-    av_freep(&mov->trex_data);
-
     return 0;
 }
 
