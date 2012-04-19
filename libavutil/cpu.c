@@ -52,7 +52,9 @@ static const struct {
     int flag;
     const char *name;
 } cpu_flag_tab[] = {
-#if   ARCH_PPC
+#if   ARCH_ARM
+    { AV_CPU_FLAG_IWMMXT,    "iwmmxt"     },
+#elif ARCH_PPC
     { AV_CPU_FLAG_ALTIVEC,   "altivec"    },
 #elif ARCH_X86
     { AV_CPU_FLAG_MMX,       "mmx"        },

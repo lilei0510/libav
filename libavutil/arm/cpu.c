@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2009 Mans Rullgard <mans@mansr.com>
- *
  * This file is part of Libav.
  *
  * Libav is free software; you can redistribute it and/or
@@ -18,16 +16,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef AVCODEC_ARM_DSPUTIL_H
-#define AVCODEC_ARM_DSPUTIL_H
+#include "libavutil/cpu.h"
+#include "config.h"
 
-#include "libavcodec/avcodec.h"
-#include "libavcodec/dsputil.h"
-
-void ff_dsputil_init_armv5te(DSPContext* c, AVCodecContext *avctx);
-void ff_dsputil_init_armv6(DSPContext* c, AVCodecContext *avctx);
-void ff_dsputil_init_vfp(DSPContext* c, AVCodecContext *avctx);
-void ff_dsputil_init_neon(DSPContext *c, AVCodecContext *avctx);
-void ff_dsputil_init_iwmmxt(DSPContext* c, AVCodecContext *avctx);
-
-#endif /* AVCODEC_ARM_DSPUTIL_H */
+int ff_get_cpu_flags_arm(void)
+{
+    return HAVE_IWMMXT * AV_CPU_FLAG_IWMMXT;
+}

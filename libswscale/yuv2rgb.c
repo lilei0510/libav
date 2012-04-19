@@ -140,7 +140,7 @@ static int func_name(SwsContext *c, const uint8_t* src[],                       
 		srcStride[2] *= 2;                                                          \
 	}                                                                               \
 	for (y=0; y < srcSliceH; y +=2){                                                \
-		dst_type *dst_1 = (dst_type*)(dst[0] + (y + srcSlic)       * dstStride[0]); \
+		dst_type *dst_1 = (dst_type*)(dst[0] + (y + srcSliceY)       * dstStride[0]); \
 		dst_type *dst_2 = (dst_type*)(dst[0] + (y + srcSliceY + 1) * dstStride[0]); \
 		const uint32_t av_unused *r, *g, *b;                                        \
 		const uint8_t *py_1 = src[0] + y      * srcStride[0];                       \
@@ -599,14 +599,9 @@ SwsFunc ff_yuv2rgb_get_func_ptr(SwsContext *c)
         t = ff_yuv2rgb_init_altivec(c);
     else if (ARCH_BFIN)
         t = ff_yuv2rgb_get_func_ptr_bfin(c);
-<<<<<<< HEAD
-    }
-#if HAVE_IPP
-	t = ff_yuv2rgb_init_ipp(c);
-#endif
-=======
+    else if (HAVE_IPP)
+	    t = ff_yuv2rgb_init_ipp(c);
 
->>>>>>> 43c6107e48171b9b14aad78941b4fc58d2bc61bd
     if (t)
         return t;
 
@@ -626,15 +621,6 @@ SwsFunc ff_yuv2rgb_get_func_ptr(SwsContext *c)
         if (CONFIG_SWSCALE_ALPHA && c->srcFormat == PIX_FMT_YUVA420P)
             return yuva2argb_c;
     case PIX_FMT_RGBA:
-<<<<<<< HEAD
-    case PIX_FMT_BGRA:       return (CONFIG_SWSCALE_ALPHA && c->srcFormat == PIX_FMT_YUVA420P) ? yuva2rgba_c : yuv2rgb_c_32;
-    case PIX_FMT_RGB24:      return yuv2rgb_c_24_rgb;
-    case PIX_FMT_BGR24:      return yuv2rgb_c_24_bgr;
-	case PIX_FMT_RGB19:      return yuv2rgb_c_19_rgb;
-	case PIX_FMT_BGR19:      return yuv2rgb_c_19_bgr;
-	case PIX_FMT_RGB18:      return yuv2rgb_c_18_rgb;
-	case PIX_FMT_BGR18:      return yuv2rgb_c_18_bgr;
-=======
     case PIX_FMT_BGRA:
         if (CONFIG_SWSCALE_ALPHA && c->srcFormat == PIX_FMT_YUVA420P)
             return yuva2rgba_c;
@@ -644,7 +630,14 @@ SwsFunc ff_yuv2rgb_get_func_ptr(SwsContext *c)
         return yuv2rgb_c_24_rgb;
     case PIX_FMT_BGR24:
         return yuv2rgb_c_24_bgr;
->>>>>>> 43c6107e48171b9b14aad78941b4fc58d2bc61bd
+	case PIX_FMT_RGB19:
+	    return yuv2rgb_c_19_rgb;
+	case PIX_FMT_BGR19:
+	    return yuv2rgb_c_19_bgr;
+	case PIX_FMT_RGB18:
+	    return yuv2rgb_c_18_rgb;
+	case PIX_FMT_BGR18:
+	    return yuv2rgb_c_18_bgr;
     case PIX_FMT_RGB565:
     case PIX_FMT_BGR565:
     case PIX_FMT_RGB555:
@@ -709,40 +702,12 @@ static uint16_t roundToInt16(int64_t f)
         return r;
 }
 
-<<<<<<< HEAD
 static av_always_inline int div_round(int dividend, int divisor)
 {
 	if (dividend > 0)	return (dividend + (divisor>>1)) / divisor;
 	else 				return -((-dividend + (divisor>>1)) / divisor);
 }
 
-av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4], int fullRange,
-                                     int brightness, int contrast, int saturation)
-{
-    const int isRgb =      c->dstFormat==PIX_FMT_RGB32
-                        || c->dstFormat==PIX_FMT_RGB32_1
-						|| c->dstFormat==PIX_FMT_BGR24
-						|| c->dstFormat==PIX_FMT_RGB18
-						|| c->dstFormat==PIX_FMT_RGB19
-						|| c->dstFormat==PIX_FMT_BGR18
-						|| c->dstFormat==PIX_FMT_BGR19
-                        || c->dstFormat==PIX_FMT_RGB565BE
-                        || c->dstFormat==PIX_FMT_RGB565LE
-                        || c->dstFormat==PIX_FMT_RGB555BE
-                        || c->dstFormat==PIX_FMT_RGB555LE
-                        || c->dstFormat==PIX_FMT_RGB444BE
-                        || c->dstFormat==PIX_FMT_RGB444LE
-                        || c->dstFormat==PIX_FMT_RGB8
-                        || c->dstFormat==PIX_FMT_RGB4
-                        || c->dstFormat==PIX_FMT_RGB4_BYTE
-                        || c->dstFormat==PIX_FMT_MONOBLACK;
-    const int isNotNe =    c->dstFormat==PIX_FMT_NE(RGB565LE,RGB565BE)
-                        || c->dstFormat==PIX_FMT_NE(RGB555LE,RGB555BE)
-                        || c->dstFormat==PIX_FMT_NE(RGB444LE,RGB444BE)
-                        || c->dstFormat==PIX_FMT_NE(BGR565LE,BGR565BE)
-                        || c->dstFormat==PIX_FMT_NE(BGR555LE,BGR555BE)
-                        || c->dstFormat==PIX_FMT_NE(BGR444LE,BGR444BE);
-=======
 av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4],
                                      int fullRange, int brightness,
                                      int contrast, int saturation)
@@ -750,6 +715,10 @@ av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4],
     const int isRgb = c->dstFormat == PIX_FMT_RGB32     ||
                       c->dstFormat == PIX_FMT_RGB32_1   ||
                       c->dstFormat == PIX_FMT_BGR24     ||
+                      c->dstFormat==PIX_FMT_RGB18       ||
+                      c->dstFormat==PIX_FMT_RGB19       ||
+                      c->dstFormat==PIX_FMT_BGR18       ||
+                      c->dstFormat==PIX_FMT_BGR19       ||         
                       c->dstFormat == PIX_FMT_RGB565BE  ||
                       c->dstFormat == PIX_FMT_RGB565LE  ||
                       c->dstFormat == PIX_FMT_RGB555BE  ||
@@ -766,7 +735,6 @@ av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4],
                         c->dstFormat == PIX_FMT_NE(BGR565LE, BGR565BE) ||
                         c->dstFormat == PIX_FMT_NE(BGR555LE, BGR555BE) ||
                         c->dstFormat == PIX_FMT_NE(BGR444LE, BGR444BE);
->>>>>>> 43c6107e48171b9b14aad78941b4fc58d2bc61bd
     const int bpp = c->dstFormatBpp;
     uint8_t *y_table;
     uint16_t *y_table16;
