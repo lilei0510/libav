@@ -41,6 +41,7 @@ OBJS-$(HAVE_ARMVFP)                    += arm/dsputil_vfp.o             \
                                           arm/dsputil_init_vfp.o        \
                                           $(VFP-OBJS-yes)
 
+OBJS-$(HAVE_IPP)                       += arm/dsputil_init_ipp.o
 OBJS-$(HAVE_IWMMXT)                    += arm/dsputil_iwmmxt.o          \
                                           arm/mpegvideo_iwmmxt.o        \
 

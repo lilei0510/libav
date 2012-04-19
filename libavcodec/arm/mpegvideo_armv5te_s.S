@@ -38,21 +38,21 @@
 
 .macro  dequant_t       dst, src, mul, add, tmp
         rsbs            \tmp, ip, \src, asr #16
-        it              gt
+        IT(gt)
         addgt           \tmp, \add, #0
-        it              lt
+        IT(lt)
         rsblt           \tmp, \add, #0
-        it              ne
+        IT(ne)
         smlatbne        \dst, \src, \mul, \tmp
 .endm
 
 .macro  dequant_b       dst, src, mul, add, tmp
         rsbs            \tmp, ip, \src, lsl #16
-        it              gt
+        IT(gt)
         addgt           \tmp, \add, #0
-        it              lt
+        IT(lt)
         rsblt           \tmp, \add, #0
-        it              ne
+        IT(ne)
         smlabbne        \dst, \src, \mul, \tmp
 .endm
 
@@ -86,27 +86,27 @@ function ff_dct_unquantize_h263_armv5te, export=1
         strh            lr, [r0], #2
 
         subs            r3, r3, #8
-        it              gt
+        IT(gt)
         ldrdgt          r4, [r0, #0] /* load data early to avoid load/use pipeline stall */
         bgt             1b
 
         adds            r3, r3, #2
-        it              le
+        IT(le)
         pople           {r4-r9,pc}
 2:
         ldrsh           r9, [r0, #0]
         ldrsh           lr, [r0, #2]
         mov             r8, r2
         cmp             r9, #0
-        it              lt
+        IT(lt)
         rsblt           r8, r2, #0
-        it              ne
+        IT(ne)
         smlabbne        r9, r9, r1, r8
         mov             r8, r2
         cmp             lr, #0
-        it              lt
+        IT(lt)
         rsblt           r8, r2, #0
-        it              ne
+        IT(ne)
         smlabbne        lr, lr, r1, r8
         strh            r9, [r0], #2
         strh            lr, [r0], #2

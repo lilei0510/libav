@@ -64,14 +64,20 @@ static inline av_const int mid_pred(int a, int b, int c)
     __asm__ (
         "mov   %0, %2  \n\t"
         "cmp   %1, %2  \n\t"
+#if !CONFIG_EZX
         "itt   gt      \n\t"
+#endif
         "movgt %0, %1  \n\t"
         "movgt %1, %2  \n\t"
         "cmp   %1, %3  \n\t"
+#if !CONFIG_EZX
         "it    le      \n\t"
+#endif
         "movle %1, %3  \n\t"
         "cmp   %0, %1  \n\t"
+#if !CONFIG_EZX
         "it    gt      \n\t"
+#endif
         "movgt %0, %1  \n\t"
         : "=&r"(m), "+r"(a)
         : "r"(b), "r"(c)

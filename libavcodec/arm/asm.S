@@ -19,7 +19,7 @@
  */
 
 #include "config.h"
-
+\
 #ifdef __ELF__
 #   define ELF
 #else
@@ -34,13 +34,33 @@
 #   define T @
 #endif
 
+#if CONFIG_EZX
+#   define ldm ldmia
+#   define pop ldmfd sp!,
+#   define pople pop
+#   define push stmfd sp!,
+#   define stm stmia
+#   define ELF_X @
+#   define IT(op)
+#   define ITT(op)
+#   define ITTT(op)
+#   define ITTTT(op)
+#else
+#   define ELF_X
+#   define IT(op) it op
+#   define ITT(op) itt op
+#   define ITTT(op) ittt op
+#   define ITTTT(op) itttt op
+#endif //CONFIG_EZX
+
+
 #if   HAVE_NEON
         .arch           armv7-a
 #elif HAVE_ARMV6T2
         .arch           armv6t2
 #elif HAVE_ARMV6
         .arch           armv6
-#elif HAVE_ARMV5TE
+#elif HAVE_ARMV5TE && !(CONFIG_EZX)
         .arch           armv5te
 #endif
 
@@ -50,7 +70,9 @@
         .fpu            vfp
 #endif
 
+#if !(CONFIG_EZX)
         .syntax unified
+#endif
 T       .thumb
 
 .macro  require8 val=1

@@ -117,6 +117,7 @@ void dsputil_init_arm(DSPContext* c, AVCodecContext *avctx)
     c->put_no_rnd_pixels_tab[1][3] = ff_put_no_rnd_pixels8_xy2_arm;
     }
 
+	if (HAVE_IPP)  	  ff_dsputil_init_ipp(c, avctx);
     if (HAVE_ARMV5TE) ff_dsputil_init_armv5te(c, avctx);
     if (HAVE_ARMV6)   ff_dsputil_init_armv6(c, avctx);
     if (HAVE_IWMMXT)  ff_dsputil_init_iwmmxt(c, avctx);

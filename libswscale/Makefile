@@ -6,6 +6,7 @@ HEADERS = swscale.h
 OBJS = options.o rgb2rgb.o swscale.o utils.o yuv2rgb.o \
        swscale_unscaled.o
 
+OBJS-$(HAVE_IPP)           +=  ipp/yuv2rgb_ipp.o
 OBJS-$(ARCH_BFIN)          +=  bfin/internal_bfin.o     \
                                bfin/swscale_bfin.o      \
                                bfin/yuv2rgb_bfin.o
@@ -23,4 +24,4 @@ MMX-OBJS-$(HAVE_YASM)      +=  x86/input.o              \
 
 TESTPROGS = colorspace swscale
 
-DIRS = bfin mlib ppc sparc x86
+DIRS = bfin ipp mlib ppc sparc x86
