@@ -64,7 +64,7 @@ static av_cold int tgv_decode_init(AVCodecContext *avctx){
  */
 static int unpack(const uint8_t *src, const uint8_t *src_end, unsigned char *dst, int width, int height) {
     unsigned char *dst_end = dst + width*height;
-    int size, size1, size2, av_uninit(offset), run;
+    int size, size1, size2, offset, run;
     unsigned char *dst_start = dst;
 
     if (src[0] & 0x01)
@@ -342,5 +342,5 @@ AVCodec ff_eatgv_decoder = {
     .init           = tgv_decode_init,
     .close          = tgv_decode_end,
     .decode         = tgv_decode_frame,
-    .long_name = NULL_IF_CONFIG_SMALL("Electronic Arts TGV video"),
+    .long_name      = NULL_IF_CONFIG_SMALL("Electronic Arts TGV video"),
 };

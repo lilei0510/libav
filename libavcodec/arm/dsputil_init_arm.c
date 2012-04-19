@@ -73,7 +73,7 @@ static void simple_idct_arm_add(uint8_t *dest, int line_size, DCTELEM *block)
     ff_add_pixels_clamped(block, dest, line_size);
 }
 
-void dsputil_init_arm(DSPContext* c, AVCodecContext *avctx)
+void ff_dsputil_init_arm(DSPContext* c, AVCodecContext *avctx)
 {
     const int high_bit_depth = avctx->bits_per_raw_sample > 8;
 
@@ -120,7 +120,6 @@ void dsputil_init_arm(DSPContext* c, AVCodecContext *avctx)
 	if (HAVE_IPP)  	  ff_dsputil_init_ipp(c, avctx);
     if (HAVE_ARMV5TE) ff_dsputil_init_armv5te(c, avctx);
     if (HAVE_ARMV6)   ff_dsputil_init_armv6(c, avctx);
-    if (HAVE_IWMMXT)  ff_dsputil_init_iwmmxt(c, avctx);
     if (HAVE_ARMVFP)  ff_dsputil_init_vfp(c, avctx);
     if (HAVE_NEON)    ff_dsputil_init_neon(c, avctx);
 }

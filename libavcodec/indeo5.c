@@ -453,6 +453,10 @@ static int decode_mb_info(IVI5DecContext *ctx, IVIBandDesc *band,
     ref_mb = tile->ref_mbs;
     offs   = tile->ypos * band->pitch + tile->xpos;
 
+    if (!ref_mb &&
+        ((band->qdelta_present && band->inherit_qdelta) || band->inherit_mv))
+        return AVERROR_INVALIDDATA;
+
     /* scale factor for motion vectors */
     mv_scale = (ctx->planes[0].bands[0].mb_size >> 3) - (band->mb_size >> 3);
     mv_x = mv_y = 0;
@@ -809,7 +813,7 @@ static av_cold int decode_close(AVCodecContext *avctx)
     ff_ivi_free_buffers(&ctx->planes[0]);
 
     if (ctx->mb_vlc.cust_tab.table)
-        free_vlc(&ctx->mb_vlc.cust_tab);
+        ff_free_vlc(&ctx->mb_vlc.cust_tab);
 
     if (ctx->frame.data[0])
         avctx->release_buffer(avctx, &ctx->frame);

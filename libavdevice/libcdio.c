@@ -37,6 +37,7 @@
 #undef free
 
 typedef struct CDIOContext {
+    AVClass             *class;
     cdrom_drive_t       *drive;
     cdrom_paranoia_t *paranoia;
     int32_t last_sector;
@@ -46,7 +47,7 @@ typedef struct CDIOContext {
     int paranoia_mode;
 } CDIOContext;
 
-static av_cold int read_header(AVFormatContext *ctx, AVFormatParameters *ap)
+static av_cold int read_header(AVFormatContext *ctx)
 {
     CDIOContext *s = ctx->priv_data;
     AVStream *st;

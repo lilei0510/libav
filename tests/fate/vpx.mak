@@ -4,11 +4,14 @@ fate-ea-vp60: CMD = framecrc -i $(SAMPLES)/ea-vp6/g36.vp6
 FATE_TESTS += fate-ea-vp61
 fate-ea-vp61: CMD = framecrc -i $(SAMPLES)/ea-vp6/MovieSkirmishGondor.vp6 -t 4
 
-FATE_TESTS += fate-vp3
-fate-vp3: CMD = framecrc -i $(SAMPLES)/vp3/vp31.avi
+FATE_VP3 += fate-vp31
+fate-vp31: CMD = framecrc -i $(SAMPLES)/vp3/vp31.avi
 
-FATE_TESTS += fate-vp3-coeff-level64
+FATE_VP3 += fate-vp3-coeff-level64
 fate-vp3-coeff-level64: CMD = framecrc -i $(SAMPLES)/vp3/coeff_level64.mkv
+
+FATE_TESTS += $(FATE_VP3)
+fate-vp3: $(FATE_VP3)
 
 FATE_TESTS += fate-vp5
 fate-vp5: CMD = framecrc -i $(SAMPLES)/vp5/potter512-400-partial.avi -an
@@ -30,12 +33,18 @@ endef
 define FATE_VP8_FULL
 $(foreach N,$(VP8_SUITE),$(eval $(call FATE_VP8_SUITE,$(N),$(1),$(2))))
 
+# FIXME this file contains two frames with identical timestamps,
+# so avconv drops one of them
 FATE_VP8 += fate-vp8-sign-bias$(1)
-fate-vp8-sign-bias$(1): CMD = framemd5 $(2) -i $(SAMPLES)/vp8/sintel-signbias.ivf -vsync 0
+fate-vp8-sign-bias$(1): CMD = framemd5 $(2) -i $(SAMPLES)/vp8/sintel-signbias.ivf
 fate-vp8-sign-bias$(1): REF = $(SRC_PATH)/tests/ref/fate/vp8-sign-bias
+
+FATE_VP8 += fate-vp8-size-change$(1)
+fate-vp8-size-change$(1): CMD = framemd5 $(2) -i $(SAMPLES)/vp8/frame_size_change.webm -frames:v 30
+fate-vp8-size-change$(1): REF = $(SRC_PATH)/tests/ref/fate/vp8-size-change
 endef
 
 $(eval $(call FATE_VP8_FULL))
-$(eval $(call FATE_VP8_FULL,-emu-edge,-flags emu_edge))
+$(eval $(call FATE_VP8_FULL,-emu-edge,-flags +emu_edge))
 FATE_TESTS += $(FATE_VP8)
 fate-vp8: $(FATE_VP8)

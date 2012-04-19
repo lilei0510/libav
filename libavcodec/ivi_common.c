@@ -132,7 +132,7 @@ int ff_ivi_dec_huff_desc(GetBitContext *gb, int desc_coded, int which_tab,
                 ff_ivi_huff_desc_copy(&huff_tab->cust_desc, &new_huff);
 
                 if (huff_tab->cust_tab.table)
-                    free_vlc(&huff_tab->cust_tab);
+                    ff_free_vlc(&huff_tab->cust_tab);
                 result = ff_ivi_create_huff_from_desc(&huff_tab->cust_desc,
                         &huff_tab->cust_tab, 0);
                 if (result) {
@@ -164,7 +164,7 @@ void ff_ivi_huff_desc_copy(IVIHuffDesc *dst, const IVIHuffDesc *src)
     memcpy(dst->xbits, src->xbits, src->num_rows);
 }
 
-int av_cold ff_ivi_init_planes(IVIPlaneDesc *planes, const IVIPicConfig *cfg)
+av_cold int ff_ivi_init_planes(IVIPlaneDesc *planes, const IVIPicConfig *cfg)
 {
     int         p, b;
     uint32_t    b_width, b_height, align_fac, width_aligned, height_aligned, buf_size;
@@ -226,7 +226,7 @@ int av_cold ff_ivi_init_planes(IVIPlaneDesc *planes, const IVIPicConfig *cfg)
     return 0;
 }
 
-void av_cold ff_ivi_free_buffers(IVIPlaneDesc *planes)
+av_cold void ff_ivi_free_buffers(IVIPlaneDesc *planes)
 {
     int p, b, t;
 
@@ -237,7 +237,7 @@ void av_cold ff_ivi_free_buffers(IVIPlaneDesc *planes)
             av_freep(&planes[p].bands[b].bufs[2]);
 
             if (planes[p].bands[b].blk_vlc.cust_tab.table)
-                free_vlc(&planes[p].bands[b].blk_vlc.cust_tab);
+                ff_free_vlc(&planes[p].bands[b].blk_vlc.cust_tab);
             for (t = 0; t < planes[p].bands[b].num_tiles; t++)
                 av_freep(&planes[p].bands[b].tiles[t].mbs);
             av_freep(&planes[p].bands[b].tiles);
@@ -246,7 +246,7 @@ void av_cold ff_ivi_free_buffers(IVIPlaneDesc *planes)
     }
 }
 
-int av_cold ff_ivi_init_tiles(IVIPlaneDesc *planes, int tile_width, int tile_height)
+av_cold int ff_ivi_init_tiles(IVIPlaneDesc *planes, int tile_width, int tile_height)
 {
     int         p, b, x, y, x_tiles, y_tiles, t_width, t_height;
     IVIBandDesc *band;

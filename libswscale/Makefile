@@ -3,14 +3,19 @@ FFLIBS = avutil
 
 HEADERS = swscale.h
 
-OBJS = options.o rgb2rgb.o swscale.o utils.o yuv2rgb.o \
-       swscale_unscaled.o
+OBJS = input.o                                          \
+       options.o                                        \
+       output.o                                         \
+       rgb2rgb.o                                        \
+       swscale.o                                        \
+       swscale_unscaled.o                               \
+       utils.o                                          \
+       yuv2rgb.o                                        \
 
 OBJS-$(HAVE_IPP)           +=  ipp/yuv2rgb_ipp.o
 OBJS-$(ARCH_BFIN)          +=  bfin/internal_bfin.o     \
                                bfin/swscale_bfin.o      \
                                bfin/yuv2rgb_bfin.o
-OBJS-$(CONFIG_MLIB)        +=  mlib/yuv2rgb_mlib.o
 OBJS-$(HAVE_ALTIVEC)       +=  ppc/swscale_altivec.o    \
                                ppc/yuv2rgb_altivec.o    \
                                ppc/yuv2yuv_altivec.o
@@ -22,6 +27,7 @@ MMX-OBJS-$(HAVE_YASM)      +=  x86/input.o              \
                                x86/output.o             \
                                x86/scale.o
 
-TESTPROGS = colorspace swscale
+OBJS-$(CONFIG_XMM_CLOBBER_TEST) += x86/w64xmmtest.o
 
 DIRS = bfin ipp mlib ppc sparc x86
+TESTPROGS = colorspace swscale

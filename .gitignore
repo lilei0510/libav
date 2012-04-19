@@ -11,11 +11,13 @@ doc/*.1
 doc/*.html
 doc/*.pod
 doxy
-ffmpeg
 avconv
 avplay
 avprobe
 avserver
+doc/avoptions_codec.texi
+doc/avoptions_format.texi
+doc/print_options
 libavcodec/*_tablegen
 libavcodec/*_tables.c
 libavcodec/*_tables.h
@@ -25,7 +27,6 @@ libavfilter/libavfilter*
 libavformat/libavformat*
 libavutil/avconfig.h
 libavutil/libavutil*
-libpostproc/libpostproc*
 libswscale/libswscale*
 tests/audiogen
 tests/base64
@@ -35,8 +36,10 @@ tests/tiny_psnr
 tests/videogen
 tests/vsynth1
 tests/vsynth2
+tools/aviocat
 tools/cws2fws
 tools/graph2dot
+tools/ismindex
 tools/lavfi-showfiltfmts
 tools/pktdumper
 tools/probetest

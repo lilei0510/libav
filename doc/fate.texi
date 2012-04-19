@@ -75,10 +75,12 @@ meaning only while running the regression tests.
 @item THREADS
 Specify how many threads to use while running regression tests, it is
 quite useful to detect thread-related regressions.
+@item CPUFLAGS
+Specify a mask to be applied to autodetected CPU flags.
 @end table
 
 @example
-    make V=1 SAMPLES=/var/fate/samples THREADS=2 fate
+    make V=1 SAMPLES=/var/fate/samples THREADS=2 CPUFLAGS=mmx fate
 @end example
 
 @chapter Automated Tests
@@ -132,4 +134,3 @@ makeopts=       # extra options passed to 'make'
 In order to send reports you need to create an @command{ssh} key and send it
 to @email{root@@libav.org}.
 The current server fingerprint is @var{a4:99:d7:d3:1c:92:0d:56:d6:d5:61:be:01:ae:7d:e6}
-

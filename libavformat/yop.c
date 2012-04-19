@@ -47,7 +47,7 @@ static int yop_probe(AVProbeData *probe_packet)
     return 0;
 }
 
-static int yop_read_header(AVFormatContext *s, AVFormatParameters *ap)
+static int yop_read_header(AVFormatContext *s)
 {
     YopDecContext *yop = s->priv_data;
     AVIOContext *pb  = s->pb;
@@ -72,7 +72,7 @@ static int yop_read_header(AVFormatContext *s, AVFormatParameters *ap)
     // Audio
     audio_dec               = audio_stream->codec;
     audio_dec->codec_type   = AVMEDIA_TYPE_AUDIO;
-    audio_dec->codec_id     = CODEC_ID_ADPCM_IMA_WS;
+    audio_dec->codec_id     = CODEC_ID_ADPCM_IMA_APC;
     audio_dec->channels     = 1;
     audio_dec->sample_rate  = 22050;
 
@@ -184,8 +184,6 @@ static int yop_read_seek(AVFormatContext *s, int stream_index,
     int64_t frame_pos, pos_min, pos_max;
     int frame_count;
 
-    av_free_packet(&yop->video_packet);
-
     if (!stream_index)
         return -1;
 
@@ -196,9 +194,13 @@ static int yop_read_seek(AVFormatContext *s, int stream_index,
     timestamp      = FFMAX(0, FFMIN(frame_count, timestamp));
 
     frame_pos      = timestamp * yop->frame_size + pos_min;
+
+    if (avio_seek(s->pb, frame_pos, SEEK_SET) < 0)
+        return -1;
+
+    av_free_packet(&yop->video_packet);
     yop->odd_frame = timestamp & 1;
 
-    avio_seek(s->pb, frame_pos, SEEK_SET);
     return 0;
 }
 
@@ -211,6 +213,6 @@ AVInputFormat ff_yop_demuxer = {
     .read_packet    = yop_read_packet,
     .read_close     = yop_read_close,
     .read_seek      = yop_read_seek,
-    .extensions = "yop",
-    .flags = AVFMT_GENERIC_INDEX,
+    .extensions     = "yop",
+    .flags          = AVFMT_GENERIC_INDEX,
 };

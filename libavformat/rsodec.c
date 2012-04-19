@@ -27,7 +27,7 @@
 #include "riff.h"
 #include "rso.h"
 
-static int rso_read_header(AVFormatContext *s, AVFormatParameters *ap)
+static int rso_read_header(AVFormatContext *s)
 {
     AVIOContext *pb = s->pb;
     int id, rate, bps;
@@ -94,6 +94,6 @@ AVInputFormat ff_rso_demuxer = {
     .extensions     =   "rso",
     .read_header    =   rso_read_header,
     .read_packet    =   rso_read_packet,
-    .read_seek      =   pcm_read_seek,
+    .read_seek      =   ff_pcm_read_seek,
     .codec_tag      =   (const AVCodecTag* const []){ff_codec_rso_tags, 0},
 };

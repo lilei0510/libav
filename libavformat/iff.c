@@ -107,8 +107,7 @@ static int iff_probe(AVProbeData *p)
     return 0;
 }
 
-static int iff_read_header(AVFormatContext *s,
-                           AVFormatParameters *ap)
+static int iff_read_header(AVFormatContext *s)
 {
     IffDemuxContext *iff = s->priv_data;
     AVIOContext *pb = s->pb;
@@ -283,7 +282,7 @@ static int iff_read_packet(AVFormatContext *s,
 
 AVInputFormat ff_iff_demuxer = {
     .name           = "IFF",
-    .long_name      = NULL_IF_CONFIG_SMALL("IFF format"),
+    .long_name      = NULL_IF_CONFIG_SMALL("Interchange File Format"),
     .priv_data_size = sizeof(IffDemuxContext),
     .read_probe     = iff_probe,
     .read_header    = iff_read_header,

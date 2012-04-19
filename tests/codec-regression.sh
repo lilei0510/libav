@@ -38,13 +38,13 @@ fi
 
 if [ -n "$do_mpeg2_ivlc_qprd" ]; then
 # mpeg2 encoding intra vlc qprd
-do_video_encoding mpeg2ivlc-qprd.mpg "-vb 500k -bf 2 -trellis 1 -flags +qprd+mv0 -flags2 +ivlc -cmp 2 -subcmp 2 -mbd rd -vcodec mpeg2video -f mpeg2video"
+do_video_encoding mpeg2ivlc-qprd.mpg "-vb 500k -bf 2 -trellis 1 -flags +mv0 -mpv_flags +qp_rd -intra_vlc 1 -cmp 2 -subcmp 2 -mbd rd -vcodec mpeg2video -f mpeg2video"
 do_video_decoding
 fi
 
 if [ -n "$do_mpeg2_422" ]; then
 #mpeg2 4:2:2 encoding
-do_video_encoding mpeg2_422.mpg "-vb 1000k -bf 2 -trellis 1 -flags +qprd+mv0+ildct+ilme -flags2 +ivlc -mbd rd -vcodec mpeg2video -pix_fmt yuv422p -f mpeg2video"
+do_video_encoding mpeg2_422.mpg "-vb 1000k -bf 2 -trellis 1 -flags +mv0+ildct+ilme -mpv_flags +qp_rd -intra_vlc 1 -mbd rd -vcodec mpeg2video -pix_fmt yuv422p -f mpeg2video"
 do_video_decoding
 fi
 
@@ -68,7 +68,7 @@ fi
 
 if [ -n "$do_mpeg2thread_ilace" ]; then
 # mpeg2 encoding interlaced using intra vlc
-do_video_encoding mpeg2threadivlc.mpg "-qscale 10 -vcodec mpeg2video -f mpeg1video -bf 2 -flags +ildct+ilme -flags2 +ivlc -threads 2 -slices 2"
+do_video_encoding mpeg2threadivlc.mpg "-qscale 10 -vcodec mpeg2video -f mpeg1video -bf 2 -flags +ildct+ilme -intra_vlc 1 -threads 2 -slices 2"
 do_video_decoding
 fi
 
@@ -103,7 +103,7 @@ do_video_decoding
 fi
 
 if [ -n "$do_h263p" ] ; then
-do_video_encoding h263p.avi "-qscale 2 -flags +umv+aiv+aic -s 352x288 -an -vcodec h263p -ps 300"
+do_video_encoding h263p.avi "-qscale 2 -flags +aic -umv 1 -aiv 1 -s 352x288 -an -vcodec h263p -ps 300"
 do_video_decoding
 fi
 
@@ -123,12 +123,12 @@ do_video_decoding
 fi
 
 if [ -n "$do_mpeg4adv" ] ; then
-do_video_encoding mpeg4-adv.avi "-qscale 9 -flags +mv4+part+aic -trellis 1 -mbd bits -ps 200 -an -vcodec mpeg4"
+do_video_encoding mpeg4-adv.avi "-qscale 9 -flags +mv4+aic -data_partitioning 1 -trellis 1 -mbd bits -ps 200 -an -vcodec mpeg4"
 do_video_decoding
 fi
 
 if [ -n "$do_mpeg4_qprd" ]; then
-do_video_encoding mpeg4-qprd.avi "-b 450k -bf 2 -trellis 1 -flags +mv4+qprd+mv0 -cmp 2 -subcmp 2 -mbd rd -an -vcodec mpeg4"
+do_video_encoding mpeg4-qprd.avi "-b 450k -bf 2 -trellis 1 -flags +mv4+mv0 -mpv_flags +qp_rd -cmp 2 -subcmp 2 -mbd rd -an -vcodec mpeg4"
 do_video_decoding
 fi
 
@@ -143,12 +143,12 @@ do_video_decoding
 fi
 
 if [ -n "$do_mpeg4thread" ] ; then
-do_video_encoding mpeg4-thread.avi "-b 500k -flags +mv4+part+aic -trellis 1 -mbd bits -ps 200 -bf 2 -an -vcodec mpeg4 -threads 2 -slices 2"
+do_video_encoding mpeg4-thread.avi "-b 500k -flags +mv4+aic -data_partitioning 1 -trellis 1 -mbd bits -ps 200 -bf 2 -an -vcodec mpeg4 -threads 2 -slices 2"
 do_video_decoding
 fi
 
 if [ -n "$do_error" ] ; then
-do_video_encoding error-mpeg4-adv.avi "-qscale 7 -flags +mv4+part+aic -mbd rd -ps 250 -error 10 -an -vcodec mpeg4"
+do_video_encoding error-mpeg4-adv.avi "-qscale 7 -flags +mv4+aic -data_partitioning 1 -mbd rd -ps 250 -error 10 -an -vcodec mpeg4"
 do_video_decoding
 fi
 
@@ -207,6 +207,11 @@ do_video_encoding ffv1.avi "-strict -2 -an -vcodec ffv1"
 do_video_decoding
 fi
 
+if [ -n "$do_ffvhuff" ] ; then
+do_video_encoding ffvhuff.avi "-an -vcodec ffvhuff"
+do_video_decoding ""
+fi
+
 if [ -n "$do_snow" ] ; then
 do_video_encoding snow.avi "-strict -2 -an -vcodec snow -qscale 2 -flags +qpel -me_method iter -dia_size 2 -cmp 12 -subcmp 12 -s 128x64"
 do_video_decoding "" "-s 352x288"
@@ -253,6 +258,11 @@ do_video_encoding dnxhd-720p-10bit.dnxhd "-s hd720 -b 90M -pix_fmt yuv422p10 -vf
 do_video_decoding "" "-s cif -pix_fmt yuv420p"
 fi
 
+if [ -n "$do_prores" ] ; then
+do_video_encoding prores.mov "-vcodec prores -profile hq"
+do_video_decoding "" "-pix_fmt yuv420p"
+fi
+
 if [ -n "$do_svq1" ] ; then
 do_video_encoding svq1.mov "-an -vcodec svq1 -qscale 3 -pix_fmt yuv410p"
 do_video_decoding "" "-pix_fmt yuv420p"
@@ -295,7 +305,7 @@ $tiny_psnr $pcm_dst $pcm_ref 2 1924
 fi
 
 if [ -n "$do_ac3_fixed" ] ; then
-do_audio_encoding ac3.rm "-vn -acodec ac3_fixed"
+do_audio_encoding ac3.ac3 "-vn -acodec ac3_fixed"
 # binaries configured with --disable-sse decode ac3 differently
 #do_audio_decoding
 #$tiny_psnr $pcm_dst $pcm_ref 2 1024
@@ -349,17 +359,6 @@ fi
 if [ -n "$do_flac" ] ; then
 do_audio_encoding flac.flac "-acodec flac -compression_level 2"
 do_audio_decoding
-fi
-
-if [ -n "$do_wmav1" ] ; then
-do_audio_encoding wmav1.asf "-acodec wmav1"
-do_avconv_nomd5 $pcm_dst $DEC_OPTS -i $target_path/$file -f wav
-$tiny_psnr $pcm_dst $pcm_ref 2 8192
-fi
-if [ -n "$do_wmav2" ] ; then
-do_audio_encoding wmav2.asf "-acodec wmav2"
-do_avconv_nomd5 $pcm_dst $DEC_OPTS -i $target_path/$file -f wav
-$tiny_psnr $pcm_dst $pcm_ref 2 8192
 fi
 
 #if [ -n "$do_vorbis" ] ; then

@@ -131,6 +131,8 @@ library:
     @tab Multimedia format used by Delphine Software games.
 @item CD+G                      @tab   @tab X
     @tab Video format used by CD+G karaoke disks
+@item Commodore CDXL            @tab   @tab X
+    @tab Amiga CD video format
 @item Core Audio Format         @tab   @tab X
     @tab Apple Core Audio Format
 @item CRC testing format        @tab X @tab
@@ -296,7 +298,7 @@ library:
     @tab Used in Sierra CD-ROM games.
 @item Smacker                   @tab   @tab X
     @tab Multimedia format used by many games.
-@item SMJPEG                    @tab   @tab X
+@item SMJPEG                    @tab X @tab X
     @tab Used in certain Loki game ports.
 @item Sony OpenMG (OMA)         @tab X @tab X
     @tab Audio format used in Sony Sonic Stage and Sony Vegas.
@@ -327,6 +329,7 @@ library:
     @tab Microsoft audio container used by XAudio 2.
 @item YUV4MPEG pipe             @tab X @tab X
 @item Psygnosis YOP             @tab   @tab X
+@item ZeroCodec Lossless Video  @tab   @tab X
 @end multitable
 
 @code{X} means that encoding (resp. decoding) is supported.
@@ -373,12 +376,16 @@ following image formats are supported:
     @tab V.Flash PTX format
 @item SGI          @tab X @tab X
     @tab SGI RGB image format
-@item Sun Rasterfile  @tab   @tab X
+@item Sun Rasterfile  @tab X @tab X
     @tab Sun RAS image format
 @item TIFF         @tab X @tab X
     @tab YUV, JPEG and some extension is not supported yet.
 @item Truevision Targa  @tab X @tab X
     @tab Targa (.TGA) image format
+@item XBM  @tab X @tab
+    @tab X BitMap image format
+@item XWD  @tab X @tab X
+    @tab X Window Dump image format
 @end multitable
 
 @code{X} means that encoding (resp. decoding) is supported.
@@ -402,7 +409,7 @@ following image formats are supported:
     @tab Used in Chinese MP3 players.
 @item ANSI/ASCII art         @tab     @tab  X
 @item Apple MJPEG-B          @tab     @tab  X
-@item Apple ProRes           @tab     @tab  X
+@item Apple ProRes           @tab  X  @tab  X
 @item Apple QuickDraw        @tab     @tab  X
     @tab fourcc: qdrw
 @item Asus v1                @tab  X  @tab  X
@@ -433,6 +440,8 @@ following image formats are supported:
     @tab fourcc: CSCD
 @item CD+G                   @tab     @tab  X
     @tab Video codec for CD+G karaoke disks
+@item CDXL                   @tab     @tab  X
+    @tab Amiga CD video codec
 @item Chinese AVS video      @tab  E  @tab  X
     @tab AVS1-P2, JiZhun profile, encoding through external library libxavs
 @item Delphine Software International CIN video  @tab     @tab  X
@@ -471,6 +480,7 @@ following image formats are supported:
 @item Flash Screen Video v2  @tab     @tab  X
 @item Flash Video (FLV)      @tab  X  @tab  X
     @tab Sorenson H.263 used in Flash
+@item Forward Uncompressed   @tab     @tab  X
 @item Fraps                  @tab     @tab  X
 @item H.261                  @tab  X  @tab  X
 @item H.263 / H.263-1996     @tab  X  @tab  X
@@ -522,7 +532,7 @@ following image formats are supported:
 @item MPEG-1/2 video (VDPAU acceleration)  @tab     @tab  X
 @item MPEG-2 video           @tab  X  @tab  X
 @item MPEG-4 part 2          @tab  X  @tab  X
-    @ libxvidcore can be used alternatively for encoding.
+    @tab libxvidcore can be used alternatively for encoding.
 @item MPEG-4 part 2 Microsoft variant version 1  @tab     @tab  X
 @item MPEG-4 part 2 Microsoft variant version 2  @tab  X  @tab  X
 @item MPEG-4 part 2 Microsoft variant version 3  @tab  X  @tab  X
@@ -743,6 +753,7 @@ following image formats are supported:
     @tab Real 28800 bit/s codec
 @item RealAudio 3.0 (dnet)   @tab IX  @tab  X
     @tab Real low bitrate AC-3 codec
+@item RealAudio Lossless     @tab     @tab  X
 @item RealAudio SIPR / ACELP.NET @tab     @tab  X
 @item Shorten                @tab     @tab  X
 @item Sierra VMD audio       @tab     @tab  X
@@ -761,6 +772,7 @@ following image formats are supported:
 @item Westwood Audio (SND1)  @tab     @tab  X
 @item Windows Media Audio 1  @tab  X  @tab  X
 @item Windows Media Audio 2  @tab  X  @tab  X
+@item Windows Media Audio Lossless @tab  @tab  X
 @item Windows Media Audio Pro @tab    @tab  X
 @item Windows Media Audio Voice @tab  @tab  X
 @end multitable
@@ -811,11 +823,12 @@ performance on systems without hardware floating point support).
 @item ALSA              @tab X      @tab X
 @item BKTR              @tab X      @tab
 @item DV1394            @tab X      @tab
+@item Linux framebuffer @tab X      @tab
 @item JACK              @tab X      @tab
+@item LIBCDIO           @tab X
 @item LIBDC1394         @tab X      @tab
 @item OSS               @tab X      @tab X
 @item Pulseaudio        @tab X      @tab
-@item Video4Linux       @tab X      @tab
 @item Video4Linux2      @tab X      @tab
 @item VfW capture       @tab X      @tab
 @item X11 grabbing      @tab X      @tab

@@ -118,8 +118,7 @@ static int au_probe(AVProbeData *p)
 }
 
 /* au input */
-static int au_read_header(AVFormatContext *s,
-                          AVFormatParameters *ap)
+static int au_read_header(AVFormatContext *s)
 {
     int size;
     unsigned int tag;
@@ -191,8 +190,8 @@ AVInputFormat ff_au_demuxer = {
     .read_probe     = au_probe,
     .read_header    = au_read_header,
     .read_packet    = au_read_packet,
-    .read_seek      = pcm_read_seek,
-    .codec_tag= (const AVCodecTag* const []){codec_au_tags, 0},
+    .read_seek      = ff_pcm_read_seek,
+    .codec_tag      = (const AVCodecTag* const []){ codec_au_tags, 0 },
 };
 #endif
 
@@ -207,6 +206,6 @@ AVOutputFormat ff_au_muxer = {
     .write_header      = au_write_header,
     .write_packet      = au_write_packet,
     .write_trailer     = au_write_trailer,
-    .codec_tag= (const AVCodecTag* const []){codec_au_tags, 0},
+    .codec_tag         = (const AVCodecTag* const []){ codec_au_tags, 0 },
 };
 #endif //CONFIG_AU_MUXER

@@ -38,17 +38,17 @@
 /* dct code */
 typedef short DCTELEM;
 
-void fdct_ifast (DCTELEM *data);
-void fdct_ifast248 (DCTELEM *data);
+void ff_fdct_ifast (DCTELEM *data);
+void ff_fdct_ifast248 (DCTELEM *data);
 void ff_jpeg_fdct_islow_8(DCTELEM *data);
 void ff_jpeg_fdct_islow_10(DCTELEM *data);
 void ff_fdct248_islow_8(DCTELEM *data);
 void ff_fdct248_islow_10(DCTELEM *data);
 
-void j_rev_dct (DCTELEM *data);
-void j_rev_dct4 (DCTELEM *data);
-void j_rev_dct2 (DCTELEM *data);
-void j_rev_dct1 (DCTELEM *data);
+void ff_j_rev_dct (DCTELEM *data);
+void ff_j_rev_dct4 (DCTELEM *data);
+void ff_j_rev_dct2 (DCTELEM *data);
+void ff_j_rev_dct1 (DCTELEM *data);
 void ff_wmv2_idct_c(DCTELEM *data);
 
 void ff_fdct_mmx(DCTELEM *block);
@@ -378,7 +378,6 @@ typedef struct DSPContext {
 
     /* huffyuv specific */
     void (*add_bytes)(uint8_t *dst/*align 16*/, uint8_t *src/*align 16*/, int w);
-    void (*add_bytes_l2)(uint8_t *dst/*align 16*/, uint8_t *src1/*align 16*/, uint8_t *src2/*align 16*/, int w);
     void (*diff_bytes)(uint8_t *dst/*align 16*/, uint8_t *src1/*align 16*/, uint8_t *src2/*align 1*/,int w);
     /**
      * subtract huffyuv's variant of median prediction
@@ -388,8 +387,6 @@ typedef struct DSPContext {
     void (*add_hfyu_median_prediction)(uint8_t *dst, const uint8_t *top, const uint8_t *diff, int w, int *left, int *left_top);
     int  (*add_hfyu_left_prediction)(uint8_t *dst, const uint8_t *src, int w, int left);
     void (*add_hfyu_left_prediction_bgr32)(uint8_t *dst, const uint8_t *src, int w, int *red, int *green, int *blue, int *alpha);
-    /* this might write to dst[w] */
-    void (*add_png_paeth_prediction)(uint8_t *dst, uint8_t *src, uint8_t *top, int w, int bpp);
     void (*bswap_buf)(uint32_t *dst, const uint32_t *src, int w);
     void (*bswap16_buf)(uint16_t *dst, const uint16_t *src, int len);
 
@@ -539,9 +536,8 @@ typedef struct DSPContext {
     /**
      * Calculate scalar product of two vectors.
      * @param len length of vectors, should be multiple of 16
-     * @param shift number of bits to discard from product
      */
-    int32_t (*scalarproduct_int16)(const int16_t *v1, const int16_t *v2/*align 16*/, int len, int shift);
+    int32_t (*scalarproduct_int16)(const int16_t *v1, const int16_t *v2/*align 16*/, int len);
     /* ape functions */
     /**
      * Calculate scalar product of v1 and v2,
@@ -583,8 +579,8 @@ typedef struct DSPContext {
     op_fill_func fill_block_tab[2];
 } DSPContext;
 
-void dsputil_static_init(void);
-void dsputil_init(DSPContext* p, AVCodecContext *avctx);
+void ff_dsputil_static_init(void);
+void ff_dsputil_init(DSPContext* p, AVCodecContext *avctx);
 
 int ff_check_alignment(void);
 
@@ -643,38 +639,23 @@ static inline int get_penalty_factor(int lambda, int lambda2, int type){
     }
 }
 
-void dsputil_init_alpha(DSPContext* c, AVCodecContext *avctx);
-void dsputil_init_arm(DSPContext* c, AVCodecContext *avctx);
-void dsputil_init_bfin(DSPContext* c, AVCodecContext *avctx);
-void dsputil_init_mlib(DSPContext* c, AVCodecContext *avctx);
-void dsputil_init_mmi(DSPContext* c, AVCodecContext *avctx);
-void dsputil_init_mmx(DSPContext* c, AVCodecContext *avctx);
-void dsputil_init_ppc(DSPContext* c, AVCodecContext *avctx);
-void dsputil_init_sh4(DSPContext* c, AVCodecContext *avctx);
-void dsputil_init_vis(DSPContext* c, AVCodecContext *avctx);
+void ff_dsputil_init_alpha(DSPContext* c, AVCodecContext *avctx);
+void ff_dsputil_init_arm(DSPContext* c, AVCodecContext *avctx);
+void ff_dsputil_init_bfin(DSPContext* c, AVCodecContext *avctx);
+void ff_dsputil_init_mmi(DSPContext* c, AVCodecContext *avctx);
+void ff_dsputil_init_mmx(DSPContext* c, AVCodecContext *avctx);
+void ff_dsputil_init_ppc(DSPContext* c, AVCodecContext *avctx);
+void ff_dsputil_init_sh4(DSPContext* c, AVCodecContext *avctx);
+void ff_dsputil_init_vis(DSPContext* c, AVCodecContext *avctx);
 
 void ff_dsputil_init_dwt(DSPContext *c);
 void ff_intrax8dsp_init(DSPContext* c, AVCodecContext *avctx);
 void ff_mlp_init(DSPContext* c, AVCodecContext *avctx);
 void ff_mlp_init_x86(DSPContext* c, AVCodecContext *avctx);
 
-#if ARCH_ARM
-
-#if HAVE_NEON
+#if (ARCH_ARM && HAVE_NEON) || ARCH_PPC || HAVE_MMI || HAVE_MMX
 #   define STRIDE_ALIGN 16
-#endif
-
-#elif ARCH_PPC
-
-#define STRIDE_ALIGN 16
-
-#elif HAVE_MMI
-
-#define STRIDE_ALIGN 16
-
-#endif
-
-#ifndef STRIDE_ALIGN
+#else
 #   define STRIDE_ALIGN 8
 #endif
 

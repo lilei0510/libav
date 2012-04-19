@@ -26,13 +26,16 @@
 #include <string.h>
 #include <stdlib.h>
 #include "libavformat/avformat.h"
+// FIXME those are internal headers, avserver _really_ shouldn't use them
 #include "libavformat/ffm.h"
 #include "libavformat/network.h"
 #include "libavformat/os_support.h"
 #include "libavformat/rtpdec.h"
 #include "libavformat/rtsp.h"
-// XXX for ffio_open_dyn_packet_buffer, to be removed
 #include "libavformat/avio_internal.h"
+#include "libavformat/internal.h"
+#include "libavformat/url.h"
+
 #include "libavutil/avstring.h"
 #include "libavutil/lfg.h"
 #include "libavutil/dict.h"
@@ -332,8 +335,7 @@ static int resolve_host(struct in_addr *sin_addr, const char *hostname)
     if (!ff_inet_aton(hostname, sin_addr)) {
 #if HAVE_GETADDRINFO
         struct addrinfo *ai, *cur;
-        struct addrinfo hints;
-        memset(&hints, 0, sizeof(hints));
+        struct addrinfo hints = { 0 };
         hints.ai_family = AF_INET;
         if (getaddrinfo(hostname, NULL, &hints, &ai))
             return -1;
@@ -867,7 +869,7 @@ static void close_connection(HTTPContext *c)
         }
         h = c->rtp_handles[i];
         if (h)
-            url_close(h);
+            ffurl_close(h);
     }
 
     ctx = &c->fmt_ctx;
@@ -1862,7 +1864,7 @@ static int http_parse_request(HTTPContext *c)
 
 static void fmt_bytecount(AVIOContext *pb, int64_t count)
 {
-    static const char *suffix = " kMGTP";
+    static const char suffix[] = " kMGTP";
     const char *s;
 
     for (s = suffix; count >= 100000 && s[1]; count /= 1000, s++);
@@ -2248,7 +2250,6 @@ static int http_prepare_data(HTTPContext *c)
          * Default value from Libav
          * Try to set it use configuration option
          */
-        c->fmt_ctx.preload   = (int)(0.5*AV_TIME_BASE);
         c->fmt_ctx.max_delay = (int)(0.7*AV_TIME_BASE);
 
         if (avformat_write_header(&c->fmt_ctx, NULL) < 0) {
@@ -2367,7 +2368,7 @@ static int http_prepare_data(HTTPContext *c)
                         if (c->rtp_protocol == RTSP_LOWER_TRANSPORT_TCP)
                             max_packet_size = RTSP_TCP_MAX_PACKET_SIZE;
                         else
-                            max_packet_size = url_get_max_packet_size(c->rtp_handles[c->packet_stream_index]);
+                            max_packet_size = c->rtp_handles[c->packet_stream_index]->max_packet_size;
                         ret = ffio_open_dyn_packet_buf(&ctx->pb, max_packet_size);
                     } else {
                         ret = avio_open_dyn_buf(&ctx->pb);
@@ -2520,8 +2521,8 @@ static int http_send_data(HTTPContext *c)
                 } else {
                     /* send RTP packet directly in UDP */
                     c->buffer_ptr += 4;
-                    url_write(c->rtp_handles[c->packet_stream_index],
-                              c->buffer_ptr, len);
+                    ffurl_write(c->rtp_handles[c->packet_stream_index],
+                                c->buffer_ptr, len);
                     c->buffer_ptr += len;
                     /* here we continue as we can send several packets per 10 ms slot */
                 }
@@ -2820,7 +2821,7 @@ static int rtsp_parse_request(HTTPContext *c)
     char protocol[32];
     char line[1024];
     int len;
-    RTSPMessageHeader header1, *header = &header1;
+    RTSPMessageHeader header1 = { 0 }, *header = &header1;
 
     c->buffer_ptr[0] = '\0';
     p = c->buffer;
@@ -2846,7 +2847,6 @@ static int rtsp_parse_request(HTTPContext *c)
     }
 
     /* parse each header line */
-    memset(header, 0, sizeof(*header));
     /* skip to next line */
     while (*p != '\n' && *p != '\0')
         p++;
@@ -3404,10 +3404,10 @@ static int rtp_new_av_stream(HTTPContext *c,
                      "rtp://%s:%d", ipaddr, ntohs(dest_addr->sin_port));
         }
 
-        if (url_open(&h, ctx->filename, AVIO_FLAG_WRITE) < 0)
+        if (ffurl_open(&h, ctx->filename, AVIO_FLAG_WRITE, NULL, NULL) < 0)
             goto fail;
         c->rtp_handles[stream_index] = h;
-        max_packet_size = url_get_max_packet_size(h);
+        max_packet_size = h->max_packet_size;
         break;
     case RTSP_LOWER_TRANSPORT_TCP:
         /* RTP/TCP case */
@@ -3430,7 +3430,7 @@ static int rtp_new_av_stream(HTTPContext *c,
     if (avformat_write_header(ctx, NULL) < 0) {
     fail:
         if (h)
-            url_close(h);
+            ffurl_close(h);
         av_free(ctx);
         return -1;
     }
@@ -3467,7 +3467,7 @@ static AVStream *add_av_stream1(FFStream *stream, AVCodecContext *codec, int cop
     }
     fst->priv_data = av_mallocz(sizeof(FeedData));
     fst->index = stream->nb_streams;
-    av_set_pts_info(fst, 33, 1, 90000);
+    avpriv_set_pts_info(fst, 33, 1, 90000);
     fst->sample_aspect_ratio = codec->sample_aspect_ratio;
     stream->streams[stream->nb_streams++] = fst;
     return fst;
@@ -4645,7 +4645,7 @@ static const OptionDef options[] = {
 
 int main(int argc, char **argv)
 {
-    struct sigaction sigact;
+    struct sigaction sigact = { { 0 } };
 
     parse_loglevel(argc, argv, options);
     av_register_all();
@@ -4663,7 +4663,6 @@ int main(int argc, char **argv)
 
     av_lfg_init(&random_state, av_get_random_seed());
 
-    memset(&sigact, 0, sizeof(sigact));
     sigact.sa_handler = handle_child_exit;
     sigact.sa_flags = SA_NOCLDSTOP | SA_RESTART;
     sigaction(SIGCHLD, &sigact, 0);

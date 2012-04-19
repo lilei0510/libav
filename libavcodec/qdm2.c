@@ -1819,6 +1819,10 @@ static av_cold int qdm2_decode_init(AVCodecContext *avctx)
     extradata += 4;
 
     s->checksum_size = AV_RB32(extradata);
+    if (s->checksum_size >= 1U << 28) {
+        av_log(avctx, AV_LOG_ERROR, "data block size too large (%u)\n", s->checksum_size);
+        return AVERROR_INVALIDDATA;
+    }
 
     s->fft_order = av_log2(s->fft_size) + 1;
     s->fft_frame_size = 2 * s->fft_size; // complex has two floats
@@ -1993,13 +1997,13 @@ static int qdm2_decode_frame(AVCodecContext *avctx, void *data,
 
 AVCodec ff_qdm2_decoder =
 {
-    .name = "qdm2",
-    .type = AVMEDIA_TYPE_AUDIO,
-    .id = CODEC_ID_QDM2,
+    .name           = "qdm2",
+    .type           = AVMEDIA_TYPE_AUDIO,
+    .id             = CODEC_ID_QDM2,
     .priv_data_size = sizeof(QDM2Context),
-    .init = qdm2_decode_init,
-    .close = qdm2_decode_close,
-    .decode = qdm2_decode_frame,
-    .capabilities = CODEC_CAP_DR1,
-    .long_name = NULL_IF_CONFIG_SMALL("QDesign Music Codec 2"),
+    .init           = qdm2_decode_init,
+    .close          = qdm2_decode_close,
+    .decode         = qdm2_decode_frame,
+    .capabilities   = CODEC_CAP_DR1,
+    .long_name      = NULL_IF_CONFIG_SMALL("QDesign Music Codec 2"),
 };
