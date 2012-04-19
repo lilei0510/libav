@@ -607,10 +607,9 @@ SwsFunc ff_yuv2rgb_get_func_ptr(SwsContext *c)
         t = ff_yuv2rgb_init_altivec(c);
     else if (ARCH_BFIN)
         t = ff_yuv2rgb_get_func_ptr_bfin(c);
+    else if (HAVE_IPP)
+        t = ff_yuv2rgb_init_ipp(c);
 
-#if HAVE_IPP
-	t = ff_yuv2rgb_init_ipp(c);
-#endif
     if (t)
         return t;
 
@@ -728,7 +727,7 @@ av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4],
                       c->dstFormat==PIX_FMT_RGB19       ||
                       c->dstFormat==PIX_FMT_BGR18       ||
                       c->dstFormat==PIX_FMT_BGR19       ||
-		      c->dstFormat == PIX_FMT_RGB565BE  ||
+                      c->dstFormat == PIX_FMT_RGB565BE  ||
                       c->dstFormat == PIX_FMT_RGB565LE  ||
                       c->dstFormat == PIX_FMT_RGB555BE  ||
                       c->dstFormat == PIX_FMT_RGB555LE  ||
@@ -744,7 +743,6 @@ av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4],
                         c->dstFormat == PIX_FMT_NE(BGR565LE, BGR565BE) ||
                         c->dstFormat == PIX_FMT_NE(BGR555LE, BGR555BE) ||
                         c->dstFormat == PIX_FMT_NE(BGR444LE, BGR444BE);
-
     const int bpp = c->dstFormatBpp;
     uint8_t *y_table;
     uint16_t *y_table16;

@@ -1292,6 +1292,7 @@ armv5te_deps="arm"
 armv6_deps="arm"
 armv6t2_deps="arm"
 armvfp_deps="arm"
+iwmmxt_deps="arm"
 neon_deps="arm"
 vfpv3_deps="armvfp"
 
@@ -2785,6 +2786,7 @@ EOF
     enabled armv6   && check_asm armv6   '"sadd16 r0, r0, r0"'
     enabled armv6t2 && check_asm armv6t2 '"movt r0, #0"'
     enabled armvfp  && check_asm armvfp  '"fadds s0, s0, s0"'
+    enabled iwmmxt  && check_asm iwmmxt  '"wunpckelub wr6, wr4"'
     enabled neon    && check_asm neon    '"vadd.i16 q0, q0, q0"'
     enabled vfpv3   && check_asm vfpv3   '"vmov.f32 s0, #1.0"'
 

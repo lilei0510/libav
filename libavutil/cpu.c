@@ -125,6 +125,7 @@ static const struct {
     { AV_CPU_FLAG_VFP,       "vfp"        },
     { AV_CPU_FLAG_VFPV3,     "vfpv3"      },
     { AV_CPU_FLAG_NEON,      "neon"       },
+    { AV_CPU_FLAG_IWMMXT,    "iwmmxt"     },
 #elif ARCH_PPC
     { AV_CPU_FLAG_ALTIVEC,   "altivec"    },
 #elif ARCH_X86
