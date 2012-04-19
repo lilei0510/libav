@@ -173,7 +173,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
     WmallDecodeCtx *s  = avctx->priv_data;
     uint8_t *edata_ptr = avctx->extradata;
     unsigned int channel_mask;
-    int i, log2_max_num_subframes, num_possible_block_sizes;
+    int i, log2_max_num_subframes;
 
     s->avctx = avctx;
     init_put_bits(&s->pb, s->frame_data, MAX_FRAMESIZE);
@@ -225,7 +225,6 @@ static av_cold int decode_init(AVCodecContext *avctx)
     s->max_subframe_len_bit = 0;
     s->subframe_len_bits    = av_log2(log2_max_num_subframes) + 1;
 
-    num_possible_block_sizes     = log2_max_num_subframes + 1;
     s->min_samples_per_subframe  = s->samples_per_frame / s->max_num_subframes;
     s->dynamic_range_compression = s->decode_flags & 0x80;
     s->bV3RTM                    = s->decode_flags & 0x100;
@@ -936,6 +935,11 @@ static int decode_subframe(WmallDecodeCtx *s)
 
     if (rawpcm_tile) {
         int bits = s->bits_per_sample - padding_zeroes;
+        if (bits <= 0) {
+            av_log(s->avctx, AV_LOG_ERROR,
+                   "Invalid number of padding bits in raw PCM tile\n");
+            return AVERROR_INVALIDDATA;
+        }
         av_dlog(s->avctx, "RAWPCM %d bits per sample. "
                 "total %d bits, remain=%d\n", bits,
                 bits * s->num_channels * subframe_len, get_bits_count(&s->gb));
@@ -1160,8 +1164,7 @@ static int decode_packet(AVCodecContext *avctx, void *data, int *got_frame_ptr,
     GetBitContext* gb  = &s->pgb;
     const uint8_t* buf = avpkt->data;
     int buf_size       = avpkt->size;
-    int num_bits_prev_frame, packet_sequence_number,
-        seekable_frame_in_packet, spliced_packet;
+    int num_bits_prev_frame, packet_sequence_number, spliced_packet;
 
     if (s->packet_done || s->packet_loss) {
         s->packet_done = 0;
@@ -1176,9 +1179,11 @@ static int decode_packet(AVCodecContext *avctx, void *data, int *got_frame_ptr,
 
         /* parse packet header */
         init_get_bits(gb, buf, s->buf_bit_size);
-        packet_sequence_number   = get_bits(gb, 4);
-        seekable_frame_in_packet = get_bits1(gb);
-        spliced_packet           = get_bits1(gb);
+        packet_sequence_number = get_bits(gb, 4);
+        skip_bits(gb, 1);   // Skip seekable_frame_in_packet, currently ununused
+        spliced_packet = get_bits1(gb);
+        if (spliced_packet)
+            av_log_missing_feature(avctx, "Bitstream splicing", 1);
 
         /* get number of bits that need to be added to the previous frame */
         num_bits_prev_frame = get_bits(gb, s->log2_frame_size);

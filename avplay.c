@@ -1564,6 +1564,10 @@ static int input_get_buffer(AVCodecContext *codec, AVFrame *pic)
     pic->opaque = ref;
     pic->type   = FF_BUFFER_TYPE_USER;
     pic->reordered_opaque = codec->reordered_opaque;
+    pic->width               = codec->width;
+    pic->height              = codec->height;
+    pic->format              = codec->pix_fmt;
+    pic->sample_aspect_ratio = codec->sample_aspect_ratio;
     if (codec->pkt) pic->pkt_pts = codec->pkt->pts;
     else            pic->pkt_pts = AV_NOPTS_VALUE;
     return 0;
@@ -1701,9 +1705,10 @@ static AVFilter input_filter =
 
 static int configure_video_filters(AVFilterGraph *graph, VideoState *is, const char *vfilters)
 {
+    static const enum PixelFormat pix_fmts[] = { PIX_FMT_YUV420P, PIX_FMT_NONE };
     char sws_flags_str[128];
     int ret;
-    SinkContext sink_ctx = { .pix_fmt = PIX_FMT_YUV420P };
+    SinkContext sink_ctx = { .pix_fmts = pix_fmts };
     AVFilterContext *filt_src = NULL, *filt_out = NULL;
     snprintf(sws_flags_str, sizeof(sws_flags_str), "flags=%d", sws_flags);
     graph->scale_sws_opts = av_strdup(sws_flags_str);
@@ -1716,8 +1721,8 @@ static int configure_video_filters(AVFilterGraph *graph, VideoState *is, const c
         return ret;
 
     if (vfilters) {
-        AVFilterInOut *outputs = av_malloc(sizeof(AVFilterInOut));
-        AVFilterInOut *inputs  = av_malloc(sizeof(AVFilterInOut));
+        AVFilterInOut *outputs = avfilter_inout_alloc();
+        AVFilterInOut *inputs  = avfilter_inout_alloc();
 
         outputs->name    = av_strdup("in");
         outputs->filter_ctx = filt_src;
@@ -1731,7 +1736,6 @@ static int configure_video_filters(AVFilterGraph *graph, VideoState *is, const c
 
         if ((ret = avfilter_graph_parse(graph, vfilters, inputs, outputs, NULL)) < 0)
             return ret;
-        av_freep(&vfilters);
     } else {
         if ((ret = avfilter_link(filt_src, 0, filt_out, 0)) < 0)
             return ret;
@@ -1831,6 +1835,7 @@ static int video_thread(void *arg)
     }
  the_end:
 #if CONFIG_AVFILTER
+    av_freep(&vfilters);
     avfilter_graph_free(&graph);
 #endif
     av_free(frame);
