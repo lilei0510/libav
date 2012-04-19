@@ -580,7 +580,9 @@ const char *sws_format_name(enum PixelFormat format);
      (x) == PIX_FMT_RGB32       ||     \
      (x) == PIX_FMT_RGB32_1     ||     \
      (x) == PIX_FMT_RGB24       ||     \
-     (x) == PIX_FMT_RGB565BE    ||     \
+	 (x) == PIX_FMT_RGB19       ||     \
+	 (x) == PIX_FMT_RGB18       ||     \
+	 (x) == PIX_FMT_RGB565BE    ||     \
      (x) == PIX_FMT_RGB565LE    ||     \
      (x) == PIX_FMT_RGB555BE    ||     \
      (x) == PIX_FMT_RGB555LE    ||     \
@@ -597,8 +599,10 @@ const char *sws_format_name(enum PixelFormat format);
      (x) == PIX_FMT_BGR48LE     ||     \
      (x) == PIX_FMT_BGR32       ||     \
      (x) == PIX_FMT_BGR32_1     ||     \
-     (x) == PIX_FMT_BGR24       ||     \
-     (x) == PIX_FMT_BGR565BE    ||     \
+	 (x) == PIX_FMT_BGR24       ||     \
+	 (x) == PIX_FMT_BGR19       ||     \
+	 (x) == PIX_FMT_BGR18       ||     \
+	 (x) == PIX_FMT_BGR565BE    ||     \
      (x) == PIX_FMT_BGR565LE    ||     \
      (x) == PIX_FMT_BGR555BE    ||     \
      (x) == PIX_FMT_BGR555LE    ||     \

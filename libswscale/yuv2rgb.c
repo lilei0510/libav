@@ -117,6 +117,49 @@ const int *sws_getCoefficients(int colorspace)
     dst[12 * i +  8] = dst[12 * i +  9] = g[Y];     \
     dst[12 * i + 10] = dst[12 * i + 11] = r[Y];
 
+#define DSTnBPP18(i,n)                              \
+    Y                  = py_##n[2 * i];             \
+    t.ui32[0]          = r[Y] + g[Y] + b[Y];        \
+    dst_##n[6 * i]     = t.ui8[0];                  \
+    dst_##n[6 * i + 1] = t.ui8[1];                  \
+    dst_##n[6 * i + 2] = t.ui8[2];                  \
+    Y                  = py_##n[2 * i + 1];         \
+    t.ui32[0]          = r[Y] + g[Y] + b[Y];        \
+    dst_##n[6 * i + 3] = t.ui8[0];                  \
+    dst_##n[6 * i + 4] = t.ui8[1];                  \
+    dst_##n[6 * i + 5] = t.ui8[2];
+
+#define DST1BPP18(i) DSTnBPP18(i,1)
+#define DST2BPP18(i) DSTnBPP18(i,2)
+
+#define YUV2RGBFUNC18(func_name, dst_type) \
+    static int func_name(SwsContext *c, const uint8_t* src[],               \
+		        int srcStride[], int srcSliceY, int srcSliceH,      \
+                        const uint8_t* dst[], int dstStride[])              \
+    {                                                                       \
+        int y;                                                              \
+        union ttag {                                                        \
+            uint32_t ui32[1];                                               \
+            uint8_t ui8[4];                                                 \
+        } t;                                                                \
+        if (c->srcFormat == PIX_FMT_YUV422P) {                              \
+                srcStride[1] *= 2;                                          \
+                srcStride[2] *= 2;                                          \
+        }                                                                   \
+        for (y = 0; y < srcSliceH; y += 2) {                                \
+            dst_type *dst_1 =                                               \
+                (dst_type *)(dst[0] + (y + srcSliceY  )   * dstStride[0]);  \
+            dst_type *dst_2=                                                \
+                (dst_type *)(dst[0] + (y + srcSliceY + 1) * dstStride[0]);  \
+            uint32_t *r, *g, *b;                                            \
+            uint8_t *py_1 = src[0] + y * srcStride[0];                      \
+            uint8_t *py_2 = py_1   + srcStride[0];                          \
+            uint8_t *pu   = src[1] + (y >> 1) * srcStride[1];               \
+            uint8_t *pv   = src[2] + (y >> 1) * srcStride[2];               \
+            unsigned int h_size= c->dstW>>3;                                \
+            while (h_size--) {                                              \
+                int U, V, Y;                                                \
+
 #define YUV2RGBFUNC(func_name, dst_type, alpha)                             \
     static int func_name(SwsContext *c, const uint8_t *src[],               \
                          int srcStride[], int srcSliceY, int srcSliceH,     \
@@ -355,6 +398,29 @@ ENDYUV2RGBLINE(24)
     PUTBGR24(dst_1, py_1, 1);
 ENDYUV2RGBFUNC()
 
+YUV2RGBFUNC18(yuv2rgb_c_18_rgb, uint8_t)
+	LOADCHROMA(0);
+	DST1BPP18(0);
+	DST2BPP18(0);
+
+	LOADCHROMA(1);
+	DST2BPP18(1);
+	DST1BPP18(1);
+
+	LOADCHROMA(2);
+	DST1BPP18(2);
+	DST2BPP18(2);
+
+	LOADCHROMA(3);
+	DST2BPP18(3);
+	DST1BPP18(3);
+CLOSEYUV2RGBFUNC(24)
+
+// only trivial mods from yuv2rgb_c_18_rgb
+#define yuv2rgb_c_18_bgr yuv2rgb_c_18_rgb
+#define yuv2rgb_c_19_rgb yuv2rgb_c_18_rgb
+#define yuv2rgb_c_19_bgr yuv2rgb_c_18_bgr
+
 // This is exactly the same code as yuv2rgb_c_32 except for the types of
 // r, g, b, dst_1, dst_2
 YUV2RGBFUNC(yuv2rgb_c_16, uint16_t, 0)
@@ -542,6 +608,9 @@ SwsFunc ff_yuv2rgb_get_func_ptr(SwsContext *c)
     else if (ARCH_BFIN)
         t = ff_yuv2rgb_get_func_ptr_bfin(c);
 
+#if HAVE_IPP
+	t = ff_yuv2rgb_init_ipp(c);
+#endif
     if (t)
         return t;
 
@@ -570,6 +639,14 @@ SwsFunc ff_yuv2rgb_get_func_ptr(SwsContext *c)
         return yuv2rgb_c_24_rgb;
     case PIX_FMT_BGR24:
         return yuv2rgb_c_24_bgr;
+    case PIX_FMT_RGB19:
+        return yuv2rgb_c_19_rgb;
+    case PIX_FMT_BGR19:
+        return yuv2rgb_c_19_bgr;
+    case PIX_FMT_RGB18:
+        return yuv2rgb_c_18_rgb;
+    case PIX_FMT_BGR18:
+        return yuv2rgb_c_18_bgr;
     case PIX_FMT_RGB565:
     case PIX_FMT_BGR565:
     case PIX_FMT_RGB555:
@@ -634,6 +711,12 @@ static uint16_t roundToInt16(int64_t f)
         return r;
 }
 
+static av_always_inline int div_round(int dividend, int divisor)
+{
+	if (dividend > 0)	return (dividend + (divisor>>1)) / divisor;
+	else 				return -((-dividend + (divisor>>1)) / divisor);
+}
+
 av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4],
                                      int fullRange, int brightness,
                                      int contrast, int saturation)
@@ -641,7 +724,11 @@ av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4],
     const int isRgb = c->dstFormat == PIX_FMT_RGB32     ||
                       c->dstFormat == PIX_FMT_RGB32_1   ||
                       c->dstFormat == PIX_FMT_BGR24     ||
-                      c->dstFormat == PIX_FMT_RGB565BE  ||
+                      c->dstFormat==PIX_FMT_RGB18       ||
+                      c->dstFormat==PIX_FMT_RGB19       ||
+                      c->dstFormat==PIX_FMT_BGR18       ||
+                      c->dstFormat==PIX_FMT_BGR19       ||
+		      c->dstFormat == PIX_FMT_RGB565BE  ||
                       c->dstFormat == PIX_FMT_RGB565LE  ||
                       c->dstFormat == PIX_FMT_RGB555BE  ||
                       c->dstFormat == PIX_FMT_RGB555LE  ||
@@ -657,6 +744,7 @@ av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4],
                         c->dstFormat == PIX_FMT_NE(BGR565LE, BGR565BE) ||
                         c->dstFormat == PIX_FMT_NE(BGR555LE, BGR555BE) ||
                         c->dstFormat == PIX_FMT_NE(BGR444LE, BGR444BE);
+
     const int bpp = c->dstFormatBpp;
     uint8_t *y_table;
     uint16_t *y_table16;
@@ -809,6 +897,48 @@ av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4],
         fill_table(c->table_bU, 2, cbu, y_table16 + yoffs + 2048);
         fill_gv_table(c->table_gV, 2, cgv);
         break;
+	case 19:
+	case 18: {
+		uint8_t table_Y[1024];
+		int entry_size = 0;
+		void *table_r = 0, *table_g = 0, *table_b = 0;
+		void *table_start;
+		uint32_t *table_32 = 0;
+		for (i = 0; i < 1024; ++i) {
+			int j;
+			j= (cy*(((i - 384)<<16) - oy) + (1<<31))>>32;
+			j = (j < 0) ? 0 : ((j > 255) ? 255 : j);
+			table_Y[i] = j;
+		}
+		table_start= table_32 = av_malloc ((197 + 2*682 + 256 + 132) * sizeof (uint32_t));
+		entry_size = sizeof (uint32_t);
+		table_r = table_32 + 197;
+		table_b = table_32 + 197 + 685;
+		table_g = table_32 + 197 + 2*682;
+
+		for (i = -197; i < 256+197; i++) {
+			uint32_t j = table_Y[i+384] >> 2;
+			if (isRgb) j <<= 12;
+			((uint32_t *)table_r)[i] = j;
+		}
+		for (i = -132; i < 256+132; i++) {
+			uint32_t j = table_Y[i+384] >> 2;
+			((uint32_t *)table_g)[i] = j << 6;
+		}
+		for (i = -232; i < 256+232; i++) {
+			uint32_t j = table_Y[i+384] >> 2;
+			if (!isRgb) j <<= 12;
+			((uint32_t *)table_b)[i] = j;
+		}
+		for (i = 0; i < 256; i++) {
+			c->table_rV[i] = (uint8_t *)table_r + entry_size * div_round (crv * (i-128), 76309);
+			c->table_gU[i] = (uint8_t *)table_g + entry_size * div_round (cgu * (i-128), 76309);
+			c->table_gV[i] = entry_size * div_round (cgv * (i-128), 76309);
+			c->table_bU[i] = (uint8_t *)table_b + entry_size * div_round (cbu * (i-128), 76309);
+		}
+		if(c->yuvTable) av_free(c->yuvTable);
+		c->yuvTable= table_start;}
+		break;
     case 24:
     case 48:
         c->yuvTable = av_malloc(1024);

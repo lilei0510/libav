@@ -65,6 +65,10 @@ enum PixelFormat {
     PIX_FMT_YUYV422,   ///< packed YUV 4:2:2, 16bpp, Y0 Cb Y1 Cr
     PIX_FMT_RGB24,     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
     PIX_FMT_BGR24,     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
+    PIX_FMT_RGB19,
+    PIX_FMT_BGR19,
+    PIX_FMT_RGB18,
+    PIX_FMT_BGR18,
     PIX_FMT_YUV422P,   ///< planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
     PIX_FMT_YUV444P,   ///< planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
     PIX_FMT_YUV410P,   ///< planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)

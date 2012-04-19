@@ -119,6 +119,7 @@ void ff_dsputil_init_arm(DSPContext* c, AVCodecContext *avctx)
     c->put_no_rnd_pixels_tab[1][3] = ff_put_no_rnd_pixels8_xy2_arm;
     }
 
+    if (HAVE_IPP)                ff_dsputil_init_ipp(c, avctx);
     if (have_armv5te(cpu_flags)) ff_dsputil_init_armv5te(c, avctx);
     if (have_armv6(cpu_flags))   ff_dsputil_init_armv6(c, avctx);
     if (have_vfp(cpu_flags))     ff_dsputil_init_vfp(c, avctx);

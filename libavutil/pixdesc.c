@@ -164,6 +164,50 @@ const AVPixFmtDescriptor av_pix_fmt_descriptors[PIX_FMT_NB] = {
         },
         .flags = PIX_FMT_RGB,
     },
+    [PIX_FMT_RGB19] = {
+        .name = "rgb19",
+        .nb_components= 3,
+        .log2_chroma_w= 0,
+        .log2_chroma_h= 0,
+        .comp = {
+            {0,1,2,3,5},        /* R */
+            {0,1,1,6,6},        /* G */
+            {0,1,1,0,5},        /* B */
+        },
+    },
+    [PIX_FMT_BGR19] = {
+        .name = "bgr19",
+        .nb_components= 3,
+        .log2_chroma_w= 0,
+        .log2_chroma_h= 0,
+        .comp = {
+            {0,2,1,0,5},        /* B */
+            {0,2,2,0,6},        /* G */
+            {0,2,3,0,5},        /* R */
+        },
+    },
+    [PIX_FMT_RGB18] = {
+        .name = "rgb18",
+        .nb_components= 3,
+        .log2_chroma_w= 0,
+        .log2_chroma_h= 0,
+        .comp = {
+            {0,1,2,3,5},        /* R */
+            {0,1,1,6,5},        /* G */
+            {0,1,1,0,5},        /* B */
+        },
+    },
+    [PIX_FMT_BGR18] = {
+        .name = "bgr18",
+        .nb_components= 3,
+        .log2_chroma_w= 0,
+        .log2_chroma_h= 0,
+        .comp = {
+            {0,1,2,3,5},        /* R */
+            {0,1,1,6,5},        /* G */
+            {0,1,1,0,5},        /* R */
+        },
+    },
     [PIX_FMT_YUV422P] = {
         .name = "yuv422p",
         .nb_components = 3,
