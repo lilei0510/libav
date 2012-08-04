@@ -21,8 +21,7 @@
 /* This code is too slow relative to the C version, probably due to caching */
 /* problems. Converting line by line (or in blocks) doesn't seem to help */
 
-SwsFunc ff_yuv2rgb_init_ipp(SwsContext *c);
-
+/* TODO: return type SwsFunc instead of int? warning: assignment makes pointer from integer without a cast in yuv2rgb.c */
 static uint32_t *ipp_r;
 static uint32_t *ipp_g;
 static uint32_t *ipp_b;
@@ -105,7 +104,7 @@ static av_always_inline int ipp_YUV2BGR_15(SwsContext *c, const uint8_t* src[], 
 }
 
 
-SwsFunc ff_yuv2rgb_init_ipp(SwsContext *c)
+av_cold SwsFunc ff_yuv2rgb_init_ipp(SwsContext *c)
 {
 	int i, isRgb = 0;
   
@@ -137,4 +136,3 @@ SwsFunc ff_yuv2rgb_init_ipp(SwsContext *c)
 	default: return NULL;
 	}
 }
-
