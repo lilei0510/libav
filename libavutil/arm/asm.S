@@ -53,14 +53,14 @@
 #   define ITTTT(op) itttt op
 #endif //CONFIG_EZX
 
-
+#define USE_NEW_CODE 1
 #if   HAVE_NEON
         .arch           armv7-a
 #elif HAVE_ARMV6T2
         .arch           armv6t2
 #elif HAVE_ARMV6
         .arch           armv6
-#elif HAVE_ARMV5TE && !(CONFIG_EZX)
+#elif HAVE_ARMV5TE && (!(CONFIG_EZX) || USE_NEW_CODE)
         .arch           armv5te
 #endif
 
@@ -84,14 +84,18 @@ ELF     .eabi_attribute 25, \val
 .endm
 
 .macro  function name, export=0
-        .set            .Lpic_idx, 0
-        .set            .Lpic_gp, 0
+#if !(CONFIG_EZX) || USE_NEW_CODE
+    .set            .Lpic_idx, 0
+    .set            .Lpic_gp, 0
+#endif
     .macro endfunc
+#if !(CONFIG_EZX) || USE_NEW_CODE
       .if .Lpic_idx
         .altmacro
         put_pic         %(.Lpic_idx - 1)
         .noaltmacro
       .endif
+#endif
 ELF     .size   \name, . - \name
         .endfunc
         .purgem endfunc
@@ -117,7 +121,7 @@ ELF     .size   \name, . - \name
 \name:
 .endm
 
-#if !HAVE_ARMV6T2
+#if !HAVE_ARMV6T2 && (!(CONFIG_EZX) || USE_NEW_CODE)
 .macro  movw    rd, val
         mov     \rd, \val &  255
         orr     \rd, \val & ~255
@@ -139,6 +143,7 @@ ELF     .size   \name, . - \name
         put_pic_\num
 .endm
 
+#if !(CONFIG_EZX) || USE_NEW_CODE
 .macro  do_def_pic      num, val, label
     .macro put_pic_\num
       .if \num
@@ -168,9 +173,10 @@ ELF     .size   \name, . - \name
     .endif
         def_pic         \val - (.Lpic\@ + (8 >> CONFIG_THUMB)), .Lpicoff\@
 .endm
+#endif
 
 .macro  movrel rd, val
-#if CONFIG_PIC
+#if CONFIG_PIC && !(CONFIG_EZX) /* */
         ldpic           \rd, \val
 #elif HAVE_ARMV6T2 && !defined(__APPLE__)
         movw            \rd, #:lower16:\val
@@ -180,6 +186,7 @@ ELF     .size   \name, . - \name
 #endif
 .endm
 
+#if !(CONFIG_EZX) || USE_NEW_CODE
 .macro  movrelx         rd,  val, gp
 #if CONFIG_PIC && defined(__ELF__)
     .ifnb \gp
@@ -207,6 +214,7 @@ ELF     .size   \name, . - \name
         movrel          \rd, \val
 #endif
 .endm
+#endif
 
 .macro  ldr_pre         rt,  rn,  rm:vararg
 A       ldr             \rt, [\rn, \rm]!
@@ -220,11 +228,13 @@ T       sub             \rn, \rn, \rm
 T       ldr             \rt, [\rn]
 .endm
 
+#if !(CONFIG_EZX) || USE_NEW_CODE
 .macro  ldr_nreg        rt,  rn,  rm:vararg
 A       ldr             \rt, [\rn, -\rm]
 T       sub             \rt, \rn, \rm
 T       ldr             \rt, [\rt]
 .endm
+#endif
 
 .macro  ldr_post        rt,  rn,  rm:vararg
 A       ldr             \rt, [\rn], \rm
@@ -259,12 +269,14 @@ T       ldrh            \rt, [\rn]
 .macro  ldrh_post       rt,  rn,  rm
 A       ldrh            \rt, [\rn], \rm
 T       ldrh            \rt, [\rn]
+#if !(CONFIG_EZX) || USE_NEW_CODE
 T       add             \rn, \rn, \rm
 .endm
 
 .macro  ldrb_post       rt,  rn,  rm
 A       ldrb            \rt, [\rn], \rm
 T       ldrb            \rt, [\rn]
+#endif
 T       add             \rn, \rn, \rm
 .endm
 

@@ -104,6 +104,7 @@ SUBDIR_VARS := CLEANFILES EXAMPLES FFLIBS HOSTPROGS TESTPROGS TOOLS      \
                ARCH_HEADERS BUILT_HEADERS SKIPHEADERS                    \
                ALTIVEC-OBJS ARMV5TE-OBJS ARMV6-OBJS ARMVFP-OBJS MMI-OBJS \
                MMX-OBJS NEON-OBJS VIS-OBJS YASM-OBJS                     \
+               IPP-OBJS IWMMXT-OBJS                                      \
                OBJS TESTOBJS
 
 define RESET

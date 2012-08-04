@@ -45,8 +45,8 @@ ARMVFP-OBJS-$(HAVE_ARMV6)              += arm/fmtconvert_vfp.o
 ARMVFP-OBJS                            += arm/dsputil_vfp.o             \
                                           arm/dsputil_init_vfp.o        \
 
-OBJS-$(HAVE_IPP)                       += arm/dsputil_init_ipp.o
-OBJS-$(HAVE_IWMMXT)                    += arm/dsputil_iwmmxt.o          \
+IPP-OBJS-$(HAVE_IPP)                   += arm/dsputil_init_ipp.o
+IWMMXT-OBJS-$(HAVE_IWMMXT)             += arm/dsputil_iwmmxt.o          \
                                           arm/mpegvideo_iwmmxt.o        \
 
 NEON-OBJS-$(CONFIG_FFT)                += arm/fft_neon.o                \

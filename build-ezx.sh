@@ -70,12 +70,13 @@ fi
 IPP_LIB="$IPPROOT/lib/ippVC_WMMX50LNX_r.a $IPPROOT/lib/ippIP_WMMX50LNX_r.a"
 #zlib: 1.2.5. deflateBound().
 
-$(dirname `readlink -f "$0"`)/configure --prefix=$ARM_INSTALL --host-cc=gcc --enable-cross-compile --cross-prefix=arm-linux- --target-os=linux \
- --sysinclude=$ARM_INSTALL/../include --ld=arm-linux-gcc --arch=armv5te --cpu=iwmmxt  \
+$(dirname `readlink -f "$0"`)/configure --prefix=$ARM_INSTALL --host-cc=gcc --enable-cross-compile --cross-prefix=iwmmxt_le- --target-os=linux \
+ --sysinclude=$ARM_INSTALL/../include --ld=iwmmxt_le-gcc --arch=armv5te --cpu=iwmmxt  \
  --enable-shared --enable-gpl --enable-version3 --enable-avplay --enable-asm \
  --disable-network --enable-runtime-cpudetect  --enable-hardcoded-tables --disable-indev=v4l --enable-libopencore-amrnb --enable-libopencore-amrwb  --enable-zlib $freetype_opt $xvid_opt \
  $freetype_opt --enable-libmp3lame  --disable-armv5te --enable-iwmmxt  --enable-pic  \
- --extra-cflags="-D_REENTRANT -DCONFIG_EZX -Wstrict-prototypes -Wmissing-prototypes -Wundef -Wdisabled-optimization -std=gnu99 -Wall -Wno-switch -Wpointer-arith -Wredundant-decls -O4   -pipe -ffast-math -fomit-frame-pointer -foptimize-sibling-calls -fstrength-reduce -frerun-loop-opt -fforce-mem -fforce-addr -fschedule-insns -fschedule-insns2 -frename-registers -finline-functions -funsafe-math-optimizations -fno-trapping-math -ffinite-math-only -finline-limit=500 $FREETYPE_CFLAGS" --extra-libs="$IPP_LIB -L$ARM_INSTALL/lib $FREETYPE_LFLAGS" --disable-debug --enable-extra-warnings
+ --extra-cflags="-D_REENTRANT -DCONFIG_EZX -Wstrict-prototypes -Wmissing-prototypes -Wundef -Wdisabled-optimization -std=gnu99 -Wall -Wno-switch -Wpointer-arith -Wredundant-decls -O4   -pipe -ffast-math -fomit-frame-pointer -foptimize-sibling-calls -fstrength-reduce -frerun-loop-opt -fforce-mem -fforce-addr -fschedule-insns -fschedule-insns2 -frename-registers -finline-functions -funsafe-math-optimizations -fno-trapping-math -ffinite-math-only -finline-limit=500 $FREETYPE_CFLAGS" --extra-libs="$IPP_LIB -L$ARM_INSTALL/lib $FREETYPE_LFLAGS" --disable-debug --enable-extra-warnings \
+ |tee cfg.log
 
 [ $? -ne 0 ] && error "configure failed!"
 time make -j4 2>&1 |tee build.log
