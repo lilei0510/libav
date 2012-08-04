@@ -27,7 +27,7 @@ static uint32_t *ipp_r;
 static uint32_t *ipp_g;
 static uint32_t *ipp_b;
 
-static av_always_inline int ipp_YUV2RGB_18(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY, int srcSliceH, uint8_t* dst[], int dstStride[])
+static av_always_inline int ipp_YUV2RGB_18(SwsContext *c, const uint8_t* src[], int srcStride[], int srcSliceY, int srcSliceH, uint8_t* dst[], int dstStride[])
 {
 	uint32_t ui32[1];
 	uint8_t *ui8 = (uint8_t *)ui32;
@@ -56,7 +56,7 @@ static av_always_inline int ipp_YUV2RGB_18(SwsContext *c, uint8_t* src[], int sr
 }
 #endif
 
-static av_always_inline int ipp_YUV2RGB_16(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY, int srcSliceH, uint8_t* dst[], int dstStride[])
+static av_always_inline int ipp_YUV2RGB_16(SwsContext *c, const uint8_t* src[], int srcStride[], int srcSliceY, int srcSliceH, uint8_t* dst[], int dstStride[])
 {
 	IppiSize Sz = {c->dstW, srcSliceH};
 
@@ -68,7 +68,7 @@ static av_always_inline int ipp_YUV2RGB_16(SwsContext *c, uint8_t* src[], int sr
 	return srcSliceH;
 }
 
-static av_always_inline int ipp_YUV2BGR_16(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY, int srcSliceH, uint8_t* dst[], int dstStride[])
+static av_always_inline int ipp_YUV2BGR_16(SwsContext *c, const uint8_t* src[], int srcStride[], int srcSliceY, int srcSliceH, uint8_t* dst[], int dstStride[])
 {
 	IppiSize Sz = {c->dstW, srcSliceH};
 
@@ -80,7 +80,7 @@ static av_always_inline int ipp_YUV2BGR_16(SwsContext *c, uint8_t* src[], int sr
 	return srcSliceH;
 }
 
-static av_always_inline int ipp_YUV2RGB_15(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY, int srcSliceH, uint8_t* dst[], int dstStride[])
+static av_always_inline int ipp_YUV2RGB_15(SwsContext *c, const uint8_t* src[], int srcStride[], int srcSliceY, int srcSliceH, uint8_t* dst[], int dstStride[])
 {
 	IppiSize Sz = {c->dstW, srcSliceH};
 
@@ -92,7 +92,7 @@ static av_always_inline int ipp_YUV2RGB_15(SwsContext *c, uint8_t* src[], int sr
 	return srcSliceH;
 }
 
-static av_always_inline int ipp_YUV2BGR_15(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY, int srcSliceH, uint8_t* dst[], int dstStride[])
+static av_always_inline int ipp_YUV2BGR_15(SwsContext *c, const uint8_t* src[], int srcStride[], int srcSliceY, int srcSliceH, uint8_t* dst[], int dstStride[])
 {
 	IppiSize Sz = {c->dstW, srcSliceH};
 
