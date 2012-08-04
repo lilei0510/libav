@@ -152,10 +152,10 @@ const int *sws_getCoefficients(int colorspace)
             dst_type *dst_2=                                                \
                 (dst_type *)(dst[0] + (y + srcSliceY + 1) * dstStride[0]);  \
             uint32_t *r, *g, *b;                                            \
-            uint8_t *py_1 = src[0] + y * srcStride[0];                      \
-            uint8_t *py_2 = py_1   + srcStride[0];                          \
-            uint8_t *pu   = src[1] + (y >> 1) * srcStride[1];               \
-            uint8_t *pv   = src[2] + (y >> 1) * srcStride[2];               \
+            const uint8_t *py_1 = src[0] + y * srcStride[0];                      \
+            const uint8_t *py_2 = py_1   + srcStride[0];                          \
+            const uint8_t *pu   = src[1] + (y >> 1) * srcStride[1];               \
+            const uint8_t *pv   = src[2] + (y >> 1) * srcStride[2];               \
             unsigned int h_size= c->dstW>>3;                                \
             while (h_size--) {                                              \
                 int U, V, Y;                                                \
