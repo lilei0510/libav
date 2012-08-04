@@ -38,6 +38,9 @@
 #undef SET_RND
 #undef WAVG2BR
 
+void add_pixels_clamped_iwmmxt(const DCTELEM *block, uint8_t *pixels, int line_size);
+void ff_dsputil_init_iwmmxt(DSPContext* c, AVCodecContext *avctx);
+
 // need scheduling
 #define OP(AVG)                                         \
     __asm__ volatile (                                      \
@@ -76,11 +79,11 @@
         : [block]"+r"(block), [pixels]"+r"(pixels), [h]"+r"(h)  \
         : [line_size]"r"(line_size) \
         : "memory", "r12");
-void put_pixels8_y2_iwmmxt(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void put_pixels8_y2_iwmmxt(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     OP("wavg2br");
 }
-void put_no_rnd_pixels8_y2_iwmmxt(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void put_no_rnd_pixels8_y2_iwmmxt(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     OP("wavg2b");
 }

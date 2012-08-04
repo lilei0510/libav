@@ -21,6 +21,8 @@
 /* This code is too slow relative to the C version, probably due to caching */
 /* problems. Converting line by line (or in blocks) doesn't seem to help */
 
+SwsFunc ff_yuv2rgb_init_ipp(SwsContext *c);
+
 static uint32_t *ipp_r;
 static uint32_t *ipp_g;
 static uint32_t *ipp_b;
@@ -98,7 +100,7 @@ static av_always_inline int ipp_YUV2BGR_15(SwsContext *c, uint8_t* src[], int sr
 		srcStride[1] *= 2;
 		srcStride[2] *= 2;
 	}
-	ippiYUV420ToBGR555_8u16u_P3C3R(src, srcStride, (uint16_t *)(dst[0]+srcSliceY*dstStride[0]), dstStride[0], Sz);  
+	ippiYUV420ToBGR555_8u16u_P3C3R(src, srcStride, (uint16_t *)(dst[0]+srcSliceY*dstStride[0]), dstStride[0], Sz);
 	return srcSliceH;
 }
 

@@ -26,8 +26,9 @@
 
 void ff_add_pixels_clamped_arm(const DCTELEM *block, uint8_t *dest, int line_size);
 void add_pixels_clamped_iwmmxt(const DCTELEM *block, uint8_t *pixels, int line_size);
-                             
-av_always_inline void ff_simple_idct_ipp(DCTELEM *block)
+void ff_dsputil_init_ipp(DSPContext* c, AVCodecContext *avctx);
+
+static av_always_inline void ff_simple_idct_ipp(DCTELEM *block)
 {
 #ifdef HAVE_IWMMXT
     ippiDCT8x8Inv_Video_16s_C1I(block);
@@ -36,7 +37,7 @@ av_always_inline void ff_simple_idct_ipp(DCTELEM *block)
 #endif
 }
 
-av_always_inline void ff_simple_idct_put_ipp(uint8_t *dest, int line_size, DCTELEM *block)
+static av_always_inline void ff_simple_idct_put_ipp(uint8_t *dest, int line_size, DCTELEM *block)
 {
 #ifdef HAVE_IWMMXT
 	ippiDCT8x8Inv_Video_16s8u_C1R(block, dest, line_size);
@@ -45,7 +46,7 @@ av_always_inline void ff_simple_idct_put_ipp(uint8_t *dest, int line_size, DCTEL
 #endif
 }
 
-av_always_inline void ff_simple_idct_add_ipp(uint8_t *dest, int line_size, DCTELEM *block)
+static av_always_inline void ff_simple_idct_add_ipp(uint8_t *dest, int line_size, DCTELEM *block)
 {
     ippiDCT8x8Inv_Video_16s_C1I(block);
 #if HAVE_IWMMXT

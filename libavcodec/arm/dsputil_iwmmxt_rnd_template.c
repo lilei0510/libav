@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-void DEF(put, pixels8)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(put, pixels8)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     __asm__ volatile (
@@ -53,7 +53,7 @@ void DEF(put, pixels8)(uint8_t *block, const uint8_t *pixels, const int line_siz
         : "memory", "r4", "r5", "r12");
 }
 
-void DEF(avg, pixels8)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(avg, pixels8)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     __asm__ volatile (
@@ -95,7 +95,7 @@ void DEF(avg, pixels8)(uint8_t *block, const uint8_t *pixels, const int line_siz
         : "memory", "r4", "r5", "r12");
 }
 
-void DEF(put, pixels16)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static DEF(put, pixels16)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     __asm__ volatile (
@@ -135,7 +135,7 @@ void DEF(put, pixels16)(uint8_t *block, const uint8_t *pixels, const int line_si
         : "memory", "r4", "r5", "r12");
 }
 
-void DEF(avg, pixels16)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(avg, pixels16)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     __asm__ volatile (
@@ -191,7 +191,7 @@ void DEF(avg, pixels16)(uint8_t *block, const uint8_t *pixels, const int line_si
         : "memory", "r4", "r5", "r12");
 }
 
-void DEF(put, pixels8_x2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(put, pixels8_x2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     // [wr0 wr1 wr2 wr3] for previous line
@@ -240,7 +240,7 @@ void DEF(put, pixels8_x2)(uint8_t *block, const uint8_t *pixels, const int line_
         : "r4", "r5", "r12", "memory");
 }
 
-void DEF(put, pixels16_x2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(put, pixels16_x2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     // [wr0 wr1 wr2 wr3] for previous line
@@ -301,7 +301,7 @@ void DEF(put, pixels16_x2)(uint8_t *block, const uint8_t *pixels, const int line
         : "r4", "r5", "r12", "memory");
 }
 
-void DEF(avg, pixels8_x2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(avg, pixels8_x2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     // [wr0 wr1 wr2 wr3] for previous line
@@ -362,7 +362,7 @@ void DEF(avg, pixels8_x2)(uint8_t *block, const uint8_t *pixels, const int line_
         : "r4", "r5", "r12", "memory");
 }
 
-void DEF(avg, pixels16_x2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(avg, pixels16_x2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     // [wr0 wr1 wr2 wr3] for previous line
@@ -439,7 +439,7 @@ void DEF(avg, pixels16_x2)(uint8_t *block, const uint8_t *pixels, const int line
         :"r4", "r5", "r12", "memory");
 }
 
-void DEF(avg, pixels8_y2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(avg, pixels8_y2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     // [wr0 wr1 wr2 wr3] for previous line
@@ -493,7 +493,7 @@ void DEF(avg, pixels8_y2)(uint8_t *block, const uint8_t *pixels, const int line_
         : "cc", "memory", "r12");
 }
 
-void DEF(put, pixels16_y2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(put, pixels16_y2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     // [wr0 wr1 wr2 wr3] for previous line
@@ -550,7 +550,7 @@ void DEF(put, pixels16_y2)(uint8_t *block, const uint8_t *pixels, const int line
         : "r4", "r5", "r12", "memory");
 }
 
-void DEF(avg, pixels16_y2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(avg, pixels16_y2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     int stride = line_size;
     // [wr0 wr1 wr2 wr3] for previous line
@@ -618,7 +618,7 @@ void DEF(avg, pixels16_y2)(uint8_t *block, const uint8_t *pixels, const int line
         : "r4", "r5", "r12", "memory");
 }
 
-void DEF(put, pixels8_xy2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(put, pixels8_xy2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     // [wr0 wr1 wr2 wr3] for previous line
     // [wr4 wr5 wr6 wr7] for current line
@@ -712,7 +712,7 @@ void DEF(put, pixels8_xy2)(uint8_t *block, const uint8_t *pixels, const int line
         : "r12", "memory");
 }
 
-void DEF(put, pixels16_xy2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(put, pixels16_xy2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     // [wr0 wr1 wr2 wr3] for previous line
     // [wr4 wr5 wr6 wr7] for current line
@@ -854,7 +854,7 @@ void DEF(put, pixels16_xy2)(uint8_t *block, const uint8_t *pixels, const int lin
         : "r12", "memory");
 }
 
-void DEF(avg, pixels8_xy2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(avg, pixels8_xy2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     // [wr0 wr1 wr2 wr3] for previous line
     // [wr4 wr5 wr6 wr7] for current line
@@ -958,7 +958,7 @@ void DEF(avg, pixels8_xy2)(uint8_t *block, const uint8_t *pixels, const int line
         : "r12", "memory");
 }
 
-void DEF(avg, pixels16_xy2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
+static void DEF(avg, pixels16_xy2)(uint8_t *block, const uint8_t *pixels, const int line_size, int h)
 {
     // [wr0 wr1 wr2 wr3] for previous line
     // [wr4 wr5 wr6 wr7] for current line
